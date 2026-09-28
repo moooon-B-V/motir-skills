@@ -1,0 +1,52 @@
+[
+  {
+    "corpusPath": "prompts/guide.md",
+    "heading": "SELECT AND REFUSE — which card, and the cards this protocol will not touch",
+    "sha256": "50b37e6ba685fa902d58e11e020c3400e20e065d4935279c88555bd61fa4e710"
+  },
+  {
+    "corpusPath": "prompts/guide.md",
+    "heading": "CLAIM — In Progress, or a RESUME",
+    "sha256": "0c5237ae34be572d35ff1316102300d1ab445471659fc02c8d6952f053503421"
+  },
+  {
+    "corpusPath": "prompts/guide.md",
+    "heading": "TAKE THE STEPS — the card's list, or DERIVED steps written back with the person's OK",
+    "sha256": "d377f9fd70acdda5e1d8f71d251901539336457533465793f2027662a3790839"
+  },
+  {
+    "corpusPath": "prompts/guide.md",
+    "heading": "ONE STEP AT A TIME",
+    "sha256": "d938ac4088c1924ecfeb9b6761e93db7e93eb3bb89b320cf3ea6a49d283113ec"
+  },
+  {
+    "corpusPath": "prompts/guide.md",
+    "heading": "VALIDATE — read-only, and a failed check is never ticked",
+    "sha256": "bcc01ff4eeb31f260eb88c97dae61ae719c772c8a9d5bf36799319f7e500fa07"
+  },
+  {
+    "corpusPath": "prompts/guide.md",
+    "heading": "TICK",
+    "sha256": "2452b0bbd2db09e1b85d7ba4485d45cfac8c92abd79bb5759d04a43c21fda643"
+  },
+  {
+    "corpusPath": "prompts/guide.md",
+    "heading": "STOP ANYWHERE — the walk is resumable because the card holds its state",
+    "sha256": "b044dc27994147d9cc02fb290065bc2569c54e9bf84a928013d0b570322efe88"
+  },
+  {
+    "corpusPath": "prompts/guide.md",
+    "heading": "A STEP THAT CANNOT BE DONE AS WRITTEN — record it and stop, never improvise the plan",
+    "sha256": "4e4bcc53c014b6c64508e873b7e4bc7a6f3632e4911129ef8065456929b525f2"
+  },
+  {
+    "corpusPath": "prompts/guide.md",
+    "heading": "CLOSE — Done, with a summary of what was done and what was checked",
+    "sha256": "065b2fa0c4f019cc58cf465fd44c7952f5a76e3f126dcb1fa3fc5bd16f6c05c5"
+  },
+  {
+    "corpusPath": "prompts/guide.md",
+    "heading": "WHAT THIS PROTOCOL NEVER DOES",
+    "sha256": "6700b1bfc1aa496d25bcaf11699316a4475a8a093a4a3324d38deb9afc987a1c"
+  }
+]
