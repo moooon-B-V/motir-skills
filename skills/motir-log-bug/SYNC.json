@@ -1,0 +1,17 @@
+[
+  {
+    "corpusPath": "prompts/log-bug.md",
+    "heading": "Bug title — the KEY is the id, there is no dotted prefix",
+    "sha256": "89c3bafa0597dc59e0dba929cbfd2cb6e8208e177c1141a89708f74d56b6a7ed"
+  },
+  {
+    "corpusPath": "prompts/log-bug.md",
+    "heading": "Placement — an EDGE keeps the bug in its RUNNABLE CONTAINER; otherwise the `Bugs` folder",
+    "sha256": "b2b8ca18d132b94de54e4554c880d6b0e60dccaeee0ae796600a8c4b61fa7c0d"
+  },
+  {
+    "corpusPath": "prompts/log-bug.md",
+    "heading": "Procedure",
+    "sha256": "3593baaad1ee89eeb439f2b4585003f2687a06500aafe23c4ff1a1334341c638"
+  }
+]

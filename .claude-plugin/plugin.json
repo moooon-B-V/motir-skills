@@ -1,0 +1,23 @@
+{
+  "name": "motir",
+  "version": "0.1.0",
+  "description": "Motir's skills for your coding agent: run the next card end to end, log a verified bug, and close a manual card — through the Motir MCP.",
+  "author": {
+    "name": "moooon B.V.",
+    "url": "https://motir.co"
+  },
+  "homepage": "https://motir.co/docs/mcp",
+  "repository": "https://github.com/moooon-B-V/motir-skills",
+  "license": "MIT",
+  "keywords": [
+    "motir",
+    "project-management",
+    "mcp",
+    "skills"
+  ],
+  "skills": [
+    "./skills/motir-log-bug",
+    "./skills/motir-mark",
+    "./skills/motir-run"
+  ]
+}
