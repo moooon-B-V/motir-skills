@@ -1,0 +1,27 @@
+[
+  {
+    "corpusPath": "prompts/fix-bugs.md",
+    "heading": "THE POPULATION — the `Bugs` folder's OWN `todo` bugs",
+    "sha256": "96d37e27e0ae569e533caa5b2ef115573be244d537a31f715dc42639c59ad61d"
+  },
+  {
+    "corpusPath": "prompts/fix-bugs.md",
+    "heading": "THE CADENCE — one bug at a time",
+    "sha256": "f688df0bfa9a55bdd103d5d9b28e3fd50cfce4ab1ee0ca4d9d589c9f8b3e0c6a"
+  },
+  {
+    "corpusPath": "prompts/fix-bugs.md",
+    "heading": "THE DISPOSITIONS — tested IN THIS ORDER, exactly one per bug, every one leaves `todo`",
+    "sha256": "1e4b40e512ab1e1db70dfab2590a0b7853ee36cef2fd00c1cb7e07c74261065b"
+  },
+  {
+    "corpusPath": "prompts/fix-bugs.md",
+    "heading": "THE REPORT — the run's deliverable to a reader",
+    "sha256": "35075c9efb75eca90ff1412c2ef3b9c82fd0e81b7172bbc26b0da31b81284790"
+  },
+  {
+    "corpusPath": "prompts/fix-bugs.md",
+    "heading": "WHAT THIS PROTOCOL NEVER DOES",
+    "sha256": "c6fc678cc5512d875450203f4081d5cad0940bcd8f4b7ee379c7b7859ecd789a"
+  }
+]

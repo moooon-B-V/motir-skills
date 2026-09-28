@@ -1,8 +1,9 @@
 # Motir skills
 
 Skills that let the coding agent you already use work a [Motir](https://motir.co) project: take the
-next card from To Do to a linked pull request, log a verified bug where it belongs, and close a manual
-card with a record of who confirmed it — all through Motir's MCP server.
+next card from To Do to a linked pull request, log a verified bug where it belongs, clear the `Bugs`
+folder one pull request per bug, and close a manual card with a record of who confirmed it — all
+through Motir's MCP server.
 
 They are plain [Agent Skills](https://agentskills.io) — one folder per skill with a `SKILL.md` — so
 any agent that reads that format can use them, and the repository is also a Claude Code plugin
@@ -26,6 +27,7 @@ Nothing else: no other credential, and no access to anything but your own projec
 |---|---|---|
 | [`motir-run`](skills/motir-run/SKILL.md) | `motir run` · `motir run <key>` · `motir next` | Closes out merged work, claims the card, builds it on its own branch, opens ONE pull request linked to the card, moves it to Implemented and publishes How to test. A card that cannot be built as written is handed to Motir's planner with the correction, not built. |
 | [`motir-log-bug`](skills/motir-log-bug/SKILL.md) | `motir log bug <what is wrong>` | Root-causes the defect first, looks for the card someone already filed, then files ONE bug — under the story it blocks, or in the project's `Bugs` folder — linked to the card it was found on. |
+| [`motir-fix-bugs`](skills/motir-fix-bugs/SKILL.md) | `motir fix bugs` · `motir fix bugs <limit>` | Works through the project's `Bugs` folder one bug at a time, oldest first. Each bug gets exactly one outcome: ONE pull request fixing only that bug, a `blocked_by` edge to the card it genuinely waits on, or a comment with the evidence when it is already fixed, cannot be reproduced or needs a person. Ends by itself and reports every bug. |
 | [`motir-mark`](skills/motir-mark/SKILL.md) | `motir mark <key> done` | Closes a card no pull request can close (a manual card: an account, a secret, a setting), walking its status to Done with a comment. A card that has a pull request is closed by its merge, and the skill says so instead. |
 
 ## Install

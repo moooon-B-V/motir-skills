@@ -11,7 +11,7 @@
     {
       "name": "motir",
       "source": "./",
-      "description": "Run the next Motir card end to end, log a verified bug, and close a manual card."
+      "description": "Run the next Motir card end to end, log a verified bug, clear the Bugs folder, and close a manual card."
     }
   ]
 }
