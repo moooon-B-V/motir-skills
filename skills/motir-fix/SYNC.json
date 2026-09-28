@@ -1,0 +1,47 @@
+[
+  {
+    "corpusPath": "prompts/fix.md",
+    "heading": "WHAT IT IS FOR — a card whose run has ENDED, with red pull requests",
+    "sha256": "f9960906c23c9ce525bacd9573f41042a3f7c9bdc4779ea91818804f1b71a8e8"
+  },
+  {
+    "corpusPath": "prompts/fix.md",
+    "heading": "THE CLAIM — `claim_work_item_repair`, and one sentence per outcome",
+    "sha256": "c4ab0cd7ff20c0db6a9412d6a0b4933d1964950a152baf16598bdd3d39b9a4a6"
+  },
+  {
+    "corpusPath": "prompts/fix.md",
+    "heading": "THE CHECKOUT — each pull request's OWN branch, never a new one",
+    "sha256": "168ee3ec70d753fac91fe49c81565b94632f45890a1ad591714420101a157ad3"
+  },
+  {
+    "corpusPath": "prompts/fix.md",
+    "heading": "LIVENESS — `touch_work_item_repair` at least every two minutes",
+    "sha256": "6d4db887b698d05349ddc0243e0fbeeb4563b0d79a6c708a687b113f33bc5540"
+  },
+  {
+    "corpusPath": "prompts/fix.md",
+    "heading": "THE FIX — `run.md` § *YOUR CI WENT RED*, under the CLI's five-attempt cap",
+    "sha256": "ac56c99bc8ad4cdb8026e11a4e99b703608e7d7bdb90e4546302ea8d529a6dc5"
+  },
+  {
+    "corpusPath": "prompts/fix.md",
+    "heading": "AN ACCEPTANCE RE-RUN — fix what the reviewer saw, then re-record once CI is green",
+    "sha256": "d3e11b16c331a3d50865200afacd2edc6dc78a1f3847586282985f5d396e2d15"
+  },
+  {
+    "corpusPath": "prompts/fix.md",
+    "heading": "THE CLOSE — `close_work_item_repair` on EVERY exit path",
+    "sha256": "7dc98981520675762b890869fe42999efa7616dd02e4cb1a17f21a4a28a08f04"
+  },
+  {
+    "corpusPath": "prompts/fix.md",
+    "heading": "THE REPORT — what a reader acts on",
+    "sha256": "854897685527590f1c8b73a83f823886975cb000d6f589f9e5aba6fd28723ee6"
+  },
+  {
+    "corpusPath": "prompts/fix.md",
+    "heading": "WHAT THIS PROTOCOL NEVER DOES",
+    "sha256": "fbf35db6eba5197e3b94aab3d43239f6ff25d0a7afea2d76a957da0db4cde083"
+  }
+]
