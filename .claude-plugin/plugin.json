@@ -9,9 +9,15 @@
   "homepage": "https://motir.co/docs/mcp",
   "repository": "https://github.com/moooon-B-V/motir-skills",
   "license": "MIT",
-  "keywords": ["motir", "project-management", "mcp", "skills"],
+  "keywords": [
+    "motir",
+    "project-management",
+    "mcp",
+    "skills"
+  ],
   "skills": [
     "./skills/motir-log-bug",
-    "./skills/motir-mark"
+    "./skills/motir-mark",
+    "./skills/motir-run"
   ]
 }

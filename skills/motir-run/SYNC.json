@@ -1,0 +1,62 @@
+[
+  {
+    "corpusPath": "prompts/run.md",
+    "heading": "⚠️ WHEN THE `motir-plan` SKILL IS NOT AVAILABLE — trigger motir-ai with the WHAT, or park, comment and STOP",
+    "sha256": "366b5aa7cb4476fcc168d2687e938fbc49cf039235fd5bbeab2e89d6e1d7497c"
+  },
+  {
+    "corpusPath": "prompts/run.md",
+    "heading": "The CLOSE-OUT SWEEP — start of every `motir run` / `motir next` (`motir mark <id> done` is DEPRECATED)",
+    "sha256": "1855de6ee3a34e8ac6b20953a4f8fb064c9380913d83d1fbd87a03181cd4c7bd"
+  },
+  {
+    "corpusPath": "prompts/run.md",
+    "heading": "A RUN ASSIGNS THE CARD TO THE USER WHO STARTED IT — and ONE claim door does not do it for you",
+    "sha256": "59b9410fb30f44c5ad65954b2465dee9fc6aa7a2516e1f28b6c55e8d44b77fe7"
+  },
+  {
+    "corpusPath": "prompts/run.md",
+    "heading": "Worktree rules",
+    "sha256": "8b22863ae08e421b4dbb074de3cf1ad7c841bfd2b0aebcce9c305e3146bad806"
+  },
+  {
+    "corpusPath": "prompts/run.md",
+    "heading": "PR titles drive the status sync — NO LONGER: the LINK does, and the title is not even a FALLBACK",
+    "sha256": "d0c8155eabda95c8ae49e445e9c766152bdfed00794c37914b1c1b46221aab8f"
+  },
+  {
+    "corpusPath": "prompts/run.md",
+    "heading": "Design-reference rule",
+    "sha256": "6a833c3786662eaafa7c9015fedbe93dea8772213fca1f1229104788ec545de1"
+  },
+  {
+    "corpusPath": "prompts/run.md",
+    "heading": "⚠️ YOUR CI WENT RED — MERGE THE BASE FIRST, then fix what the log NAMED and PUSH. **The push IS the verification**",
+    "sha256": "eb4d0ce443c5957772e36c3af23db6ad55afd4960679060a64e98837d7e5048c"
+  },
+  {
+    "corpusPath": "prompts/run.md",
+    "heading": "The how-to-test rule — every UI-touching feature PR states how to test it, and the RUN writes it onto its RUN TARGET",
+    "sha256": "85e3fbbbb3145dc6420a6ddd10b0d89c321e97c468cbc095f9ac429c69e657da"
+  },
+  {
+    "corpusPath": "prompts/run.md",
+    "heading": "⚠️ A RECORDED DEVIATION that names an OPEN defect is a `bug` to FILE — never a paragraph",
+    "sha256": "f2ac9e5a3e876e11addadb79154fd18b63d2100a1bc6546109e70209607efe17"
+  },
+  {
+    "corpusPath": "prompts/run.md",
+    "heading": "`motir run` (alias `motir next --run`)",
+    "sha256": "82351467511c91ca5f02e5edd2804bb58b36091787b4a48960c5613e930fea2e"
+  },
+  {
+    "corpusPath": "prompts/run.md",
+    "heading": "`motir run <parent>` — run a container ONE LAYER above leaves (one commit per child)",
+    "sha256": "9b1ab4e833e7a90b02669caf14a25134a125ca29a480c4baa440b1612825a1ea"
+  },
+  {
+    "corpusPath": "prompts/_shared.md",
+    "heading": "Status tracks the PR lifecycle",
+    "sha256": "2bfcc981556c0fdb29092f9ff81338d801a1162c1614b93b9459c731bce69ddc"
+  }
+]
