@@ -1,0 +1,17 @@
+{
+  "name": "motir-skills",
+  "owner": {
+    "name": "moooon B.V.",
+    "url": "https://motir.co"
+  },
+  "metadata": {
+    "description": "The Motir plugin: skills that let a coding agent work a Motir project through its MCP server."
+  },
+  "plugins": [
+    {
+      "name": "motir",
+      "source": "./",
+      "description": "Run the next Motir card end to end, log a verified bug, and close a manual card."
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+[
+  {
+    "corpusPath": "prompts/mark.md",
+    "heading": "`motir mark <id> done` — ⚠️ DEPRECATED (close-out is automatic; see `run.md`'s close-out sweep)",
+    "sha256": "ab6ea2569d20cc13d634a133d21a8d75f02394da023906a1e4999d29c48d5fa4"
+  },
+  {
+    "corpusPath": "prompts/run.md",
+    "heading": "The CLOSE-OUT SWEEP — start of every `motir run` / `motir next` (`motir mark <id> done` is DEPRECATED)",
+    "sha256": "1855de6ee3a34e8ac6b20953a4f8fb064c9380913d83d1fbd87a03181cd4c7bd"
+  }
+]
