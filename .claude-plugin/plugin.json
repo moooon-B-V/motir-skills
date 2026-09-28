@@ -1,6 +1,6 @@
 {
   "name": "motir",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "description": "Motir's skills for your coding agent: run the next card end to end, log a verified bug, clear the Bugs folder one pull request per bug, close a manual card, and be guided through one step by step — through the Motir MCP.",
   "author": {
     "name": "moooon B.V.",
