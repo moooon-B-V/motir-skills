@@ -2,7 +2,7 @@
 
 Skills that let the coding agent you already use work a [Motir](https://motir.co) project: take the
 next card from To Do to a linked pull request, log a verified bug where it belongs, clear the `Bugs`
-folder one pull request per bug, be walked through a manual card one checked step at a time, and
+folder one pull request per bug, be walked through a human card one checked step at a time, and
 close a manual card with a record of who confirmed it — all through Motir's MCP server.
 
 They are plain [Agent Skills](https://agentskills.io) — one folder per skill with a `SKILL.md` — so
@@ -29,7 +29,7 @@ Nothing else: no other credential, and no access to anything but your own projec
 | [`motir-log-bug`](skills/motir-log-bug/SKILL.md) | `motir log bug <what is wrong>` | Root-causes the defect first, looks for the card someone already filed, then files ONE bug — under the story it blocks, or in the project's `Bugs` folder — linked to the card it was found on. |
 | [`motir-fix`](skills/motir-fix/SKILL.md) | `motir fix <KEY>` | Repairs ONE card's red pull requests after the run that opened them has ended — failing checks, a merge-queue ejection, or an acceptance video sent back with Re-run. Claims the repair so nobody pushes over it, fixes on each pull request's OWN branch (never a new one), up to five attempts, re-records the acceptance video once CI is green, and closes the repair with how it ended. Never moves the card's status or merges. Not `motir fix bugs` — that is `motir-fix-bugs`, the row below. |
 | [`motir-fix-bugs`](skills/motir-fix-bugs/SKILL.md) | `motir fix bugs` · `motir fix bugs <limit>` | Works through the project's `Bugs` folder one bug at a time, oldest first. Each bug gets exactly one outcome: ONE pull request fixing only that bug, a `blocked_by` edge to the card it genuinely waits on, or a comment with the evidence when it is already fixed, cannot be reproduced or needs a person. Ends by itself and reports every bug. |
-| [`motir-guide`](skills/motir-guide/SKILL.md) | `motir guide <key>` · `motir guide` | Walks you through a `manual` card one step at a time: claims it, gives ONE step with its notes and the command to copy, checks what it can with read-only means (`dig`, a URL, a CLI `status`) before ticking the step on the card, resumes where an interrupted walk stopped, and closes the card to Done with a summary of what was done and checked. A card with no steps gets proposed steps, written to the card only with your OK. |
+| [`motir-guide`](skills/motir-guide/SKILL.md) | `motir guide <key>` · `motir guide` | Walks you through a human card — `executor: human`, whatever its type — one step at a time: claims it, gives ONE step with its notes and the command to copy, checks what it can with read-only means (`dig`, a URL, a CLI `status`) before ticking the step on the card, resumes where an interrupted walk stopped, and closes the card to Done (or leaves it to its pull request's merge) with a summary of what was done and checked. A card with no steps gets proposed steps, written to the card only with your OK. |
 | [`motir-mark`](skills/motir-mark/SKILL.md) | `motir mark <key> done` | Closes a card no pull request can close (a manual card: an account, a secret, a setting), walking its status to Done with a comment. A card that has a pull request is closed by its merge, and the skill says so instead. |
 
 ## Install

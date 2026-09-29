@@ -1,12 +1,13 @@
 ---
 name: motir-guide
-description: Walk a person through a Motir manual card one step at a time — `motir guide <key>`, or `motir guide` for their own unfinished card or the next ready one. Use when the user asks to be guided, walked or talked through a manual card or its to-do list — setting up an account, rotating a secret, adding a DNS record, configuring a dashboard — or to help them do the human steps of a card. It claims the card, gives exactly one step at a time with its notes and the command to copy, checks what it can with read-only means before ticking the step on the card, resumes where an interrupted walk stopped, and closes the card to Done with a summary of what was done and checked.
+description: Walk a person through a Motir human card — any card whose executor is human, whatever its type (manual, verification, deploy, review…) — one step at a time — `motir guide <key>`, or `motir guide` for their own unfinished card or the next ready one. Use when the user asks to be guided, walked or talked through a human card or its to-do list — setting up an account, rotating a secret, adding a DNS record, configuring a dashboard, verifying a production release — or to help them do the human steps of a card. It claims the card, gives exactly one step at a time with its notes and the command to copy, checks what it can with read-only means before ticking the step on the card, resumes where an interrupted walk stopped, and closes the card with a summary of what was done and checked — to Done, or, when the card has a linked pull request, on that pull request's merge.
 ---
 
-# `motir guide [<key>]` — one manual step at a time, checked and recorded
+# `motir guide [<key>]` — one human step at a time, checked and recorded
 
-A `manual` card is work no pull request can carry: an account to create, a secret to set, a record
-to add. Its steps live on the card as a **to-do list**. This skill walks the person through that list
+A human card — `executor: human`, whatever its `type` — is work a person does: an account to create,
+a secret to set, a record to add, a production release to verify. Its steps live on the card as a
+**to-do list**. This skill walks the person through that list
 **one step at a time**: it gives a step, waits, checks what it can without changing anything, ticks
 the step on the card, and only then gives the next. Progress lives on the card, so a walk that stops
 halfway resumes exactly where it stopped — for this person or a teammate.
@@ -81,13 +82,15 @@ Ticking is idempotent, so a repeated tick keeps who ticked it first.
 
 - **`motir guide <key>`** — `get_work_item { key }`, and keep the result.
 - **`motir guide`** — first the person's own unfinished walk: `whoami`, then `search_work_items` with
-  `type is_any_of ["manual"]`, `status is_any_of ["in_progress"]`, `assignee is_any_of [<their id>]`;
-  the lowest key is resumed. None ⇒ `list_ready { projectKey }`, paging, and take the first row whose
-  `type` is `manual`. Neither ⇒ say there is no manual card to guide and stop.
+  `status is_any_of ["in_progress"]`, `assignee is_any_of [<their id>]`. Its rows carry no `executor`,
+  so read each with `get_work_item`, lowest key first; the first whose `executor` is `human` is
+  resumed. None ⇒ `list_ready { projectKey }`, paging, and take the first row whose `executor` is
+  `human`. Neither ⇒ say there is no human card to guide and stop.
 
 Refuse, in this order — **say why, and change nothing**:
 
-1. `type` is not `manual` ⇒ it is built, not guided: point at `motir run <key>` (the `motir-run` skill).
+1. `executor` is not `human` ⇒ an agent builds it, it is not guided: point at `motir run <key>` (the
+   `motir-run` skill). The `type` decides nothing — a human card of any type is guided.
 2. Status `done` or `cancelled` ⇒ it is already finished. Re-opening it is a person's decision.
 3. Archived ⇒ say so, with the reason from its latest comment.
 4. `readiness.ready` is false ⇒ name the cards it waits on (`openBlockers`) and their status. A step
@@ -178,10 +181,12 @@ When every step is ticked:
 
 1. `add_comment { key, body }` — each step and how it was confirmed: **checked** (and what the check
    saw), **on the person's word**, or **done by the agent** (and checked). Never a secret's value. A
-   manual card has no pull request, so this comment is the record the close rests on.
-2. Walk it to Done: `transition_status { key, status: "done" }` from In Progress. If a step is refused,
-   the error lists the statuses it may move to — take the one leading to Done and continue. Never
-   `cancelled`: the work was done.
+   human card usually has no pull request, so this comment is the record the close rests on.
+2. **No linked pull request** (the card's `deliveries` is empty) ⇒ walk it to Done:
+   `transition_status { key, status: "done" }` from In Progress. If a step is refused, the error lists
+   the statuses it may move to — take the one leading to Done and continue. Never `cancelled`: the work
+   was done. **A linked pull request** (a human review, say) ⇒ do not move the status: its merge closes
+   the card. Say so and name the pull request.
 3. `get_work_item { key }` and report the status it now reads and the cards it unblocks (`blocks`).
 
 **Never close with an unticked step.** A step they agree is unnecessary goes to step 8 — removing it is
@@ -195,4 +200,5 @@ a plan change.
 - An agent step without the person's go-ahead.
 - Rewriting, reordering or deleting a list the plan wrote, or writing derived steps without their OK.
 - Improvising a replacement for a step that cannot be done as written.
-- Guiding a card that is not `manual`, re-opening a finished one, or closing one with an unticked step.
+- Guiding a card whose `executor` is not `human`, re-opening a finished one, closing one with an
+  unticked step, or hand-closing one whose pull request has not merged.
