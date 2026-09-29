@@ -2,7 +2,7 @@
   {
     "corpusPath": "prompts/guide.md",
     "heading": "SELECT AND REFUSE — which card, and the cards this protocol will not touch",
-    "sha256": "50b37e6ba685fa902d58e11e020c3400e20e065d4935279c88555bd61fa4e710"
+    "sha256": "15ec462b3e9f659351de8294e8f89f96b791ce823593336853b3140f37e94552"
   },
   {
     "corpusPath": "prompts/guide.md",
@@ -42,11 +42,11 @@
   {
     "corpusPath": "prompts/guide.md",
     "heading": "CLOSE — Done, with a summary of what was done and what was checked",
-    "sha256": "065b2fa0c4f019cc58cf465fd44c7952f5a76e3f126dcb1fa3fc5bd16f6c05c5"
+    "sha256": "761a7970a1192c62e066ffd516e66833fddd14f240708e6e29400131cee5b43b"
   },
   {
     "corpusPath": "prompts/guide.md",
     "heading": "WHAT THIS PROTOCOL NEVER DOES",
-    "sha256": "6700b1bfc1aa496d25bcaf11699316a4475a8a093a4a3324d38deb9afc987a1c"
+    "sha256": "12649fb897de649af0d226168b61b3091fa75e2a8677d0effeb3af65cd2c4275"
   }
 ]
