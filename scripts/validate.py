@@ -1,26 +1,27 @@
 #!/usr/bin/env python3
 """Check the repository's shape — what CI's `validate` workflow runs, and what a contributor runs first.
 
-1. Every folder under `skills/` holds a `SKILL.md` whose frontmatter `name` equals the folder and
+1. `check_skill` — Every folder under `skills/` holds a `SKILL.md` whose frontmatter `name` equals the folder and
    whose `description` is non-empty (at most 1024 characters, the Agent Skills limit).
-2. Every `SKILL.md` has a `## Runbook mode` section followed by a `## Standalone mode` section.
-3. Every skill has a `SYNC.json`: a non-empty JSON list of `{ corpusPath, heading, sha256 }`, each
+2. `check_skill` — Every `SKILL.md` has a `## Runbook mode` section followed by a `## Standalone mode` section.
+3. `check_skill` — Every skill has a `SYNC.json`: a non-empty JSON list of `{ corpusPath, heading, sha256 }`, each
    `heading` non-empty and each `sha256` a 64-character hex digest. (Whether the hashes still MATCH
    the runbook is checked where the runbook lives — `scripts/section-hash.py --verify`.)
-4. No tracked file carries a secret-shaped string (a GitHub or Motir token).
-5. `.claude-plugin/plugin.json` lists exactly the skill folders, and `.claude-plugin/marketplace.json`
+4. `check_secrets` — No tracked file carries a secret-shaped string (a GitHub or Motir token).
+5. `check_manifests` — `.claude-plugin/plugin.json` lists exactly the skill folders, and `.claude-plugin/marketplace.json`
    offers that plugin from the repository root.
-6. `.claude-plugin/plugin.json` declares the `motir` MCP server as `type: http` at
+6. `check_mcp_server` — `.claude-plugin/plugin.json` declares the `motir` MCP server as `type: http` at
    `https://app.motir.co/api/mcp`, with no `headers` / `headersHelper`, and carries no `userConfig` —
    the plugin signs in over OAuth and has no token path.
-7. The tree has the shape Claude's plugin directory and the claude.ai / Cowork install accept: no
+7. `check_directory_shape` — The tree has the shape Claude's plugin directory and the claude.ai / Cowork install accept: no
    top-level `bin/`, no minified or bundled JavaScript (`*.min.js`, `*.bundle.js`, or a `.js` / `.mjs` /
    `.cjs` line over 2,000 characters), every component path in `plugin.json` inside the plugin root,
    and a `LICENSE` plus a `README.md` of at least 40 words.
-8. `scripts/motir` is committed executable (mode 100755) with exactly one `MOTIR_CLI_VERSION=` pin,
+8. `check_runner` — `scripts/motir` is committed executable (mode 100755) with exactly one `MOTIR_CLI_VERSION=` pin,
    and that version of `@motir/cli` is published on npm. An unreachable registry is reported as such,
    never as an unpublished version.
 
+Each item names the `check_*` function that performs it; `main()` calls every one of them once.
 Exits 1 and names every failure. Standard library only.
 """
 

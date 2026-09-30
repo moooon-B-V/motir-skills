@@ -20,12 +20,16 @@ jobs:
           node-version: "22"
       - name: Skills, SYNC.json, secrets, manifest, directory shape and the runner's npm pin agree
         run: python3 scripts/validate.py
-      - name: section-hash.py self-test
-        run: python3 scripts/test_section_hash.py
-      - name: validate.py MCP-entry and directory-shape checks
-        run: python3 scripts/test_validate.py
-      - name: The motir CLI runner (stub node / npx)
-        run: python3 scripts/test_motir.py
+      - name: Install coverage (CI only — the scripts themselves stay standard-library)
+        run: python3 -m pip install coverage
+      - name: Unit and integration tests, under branch coverage
+        run: |
+          python3 -m coverage run -a --branch scripts/test_section_hash.py
+          python3 -m coverage run -a --branch scripts/test_validate.py
+          python3 -m coverage run -a --branch scripts/test_motir.py
+          python3 -m coverage run -a --branch scripts/test_integration.py
+      - name: validate.py stays at or above 90% line and branch coverage
+        run: python3 -m coverage report -m --include=scripts/validate.py --fail-under=90
       - name: Claude Code accepts the marketplace and plugin manifests, warnings included
         run: |
           npx --yes @anthropic-ai/claude-code@2.1.283 plugin validate . --strict

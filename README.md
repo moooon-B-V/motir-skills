@@ -124,11 +124,13 @@ python3 scripts/validate.py          # skills, SYNC.json, secrets, manifests, th
                                      # the directory's shape, and the runner's npm pin
 python3 scripts/test_validate.py     # validate.py's checks, each against a planted defect
 python3 scripts/test_motir.py        # the CLI runner, with stub node / npx
+python3 scripts/test_integration.py  # the seams between them, against npm and Claude Code
 python3 scripts/test_section_hash.py # the section definition
 claude plugin validate . --strict    # Claude Code accepts the manifests, warnings included
 ```
 
-The `validate` workflow runs all of them on every push and pull request. A new skill is added to
+The `validate` workflow runs all of them on every push and pull request, the tests under `coverage`
+with a 90% line-and-branch floor on `scripts/validate.py`. A new skill is added to
 `.claude-plugin/plugin.json`'s `skills` list in the same pull request — the validator refuses a
 folder the manifest does not list.
 
