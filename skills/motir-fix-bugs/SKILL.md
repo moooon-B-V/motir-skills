@@ -60,9 +60,10 @@ source. `origin/main` is authoritative, not `HEAD`: when the two hashes differ, 
 Everything here goes through the **Motir MCP server** connected to your agent, plus `git` and the
 GitHub CLI (`gh`). Tools are named exactly as the server names them (your client may prefix them, e.g.
 `mcp__motir__search_work_items`). If the Motir tools are not available at all, stop and tell the user
-to connect the MCP first (<https://motir.co/docs/mcp>). If a call fails with a connection error, a 401
-or a not-found, **stop and report** what you were about to do to which bug. Never work around a failed
-call.
+how to connect Motir: in Claude Code with the `motir` plugin installed, run `/mcp` and authenticate
+`motir`; otherwise, connect the MCP as described at <https://motir.co/docs/mcp>. If a call fails with
+a connection error, a 401 or a not-found, **stop and report** what you were about to do to which bug.
+Never work around a failed call.
 
 ### 1. The population — the folder's OWN To Do bugs
 

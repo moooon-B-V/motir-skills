@@ -1,16 +1,27 @@
 #!/usr/bin/env python3
 """Check the repository's shape — what CI's `validate` workflow runs, and what a contributor runs first.
 
-1. Every folder under `skills/` holds a `SKILL.md` whose frontmatter `name` equals the folder and
+1. `check_skill` — Every folder under `skills/` holds a `SKILL.md` whose frontmatter `name` equals the folder and
    whose `description` is non-empty (at most 1024 characters, the Agent Skills limit).
-2. Every `SKILL.md` has a `## Runbook mode` section followed by a `## Standalone mode` section.
-3. Every skill has a `SYNC.json`: a non-empty JSON list of `{ corpusPath, heading, sha256 }`, each
+2. `check_skill` — Every `SKILL.md` has a `## Runbook mode` section followed by a `## Standalone mode` section.
+3. `check_skill` — Every skill has a `SYNC.json`: a non-empty JSON list of `{ corpusPath, heading, sha256 }`, each
    `heading` non-empty and each `sha256` a 64-character hex digest. (Whether the hashes still MATCH
    the runbook is checked where the runbook lives — `scripts/section-hash.py --verify`.)
-4. No tracked file carries a secret-shaped string (a GitHub or Motir token).
-5. `.claude-plugin/plugin.json` lists exactly the skill folders, and `.claude-plugin/marketplace.json`
+4. `check_secrets` — No tracked file carries a secret-shaped string (a GitHub or Motir token).
+5. `check_manifests` — `.claude-plugin/plugin.json` lists exactly the skill folders, and `.claude-plugin/marketplace.json`
    offers that plugin from the repository root.
+6. `check_mcp_server` — `.claude-plugin/plugin.json` declares the `motir` MCP server as `type: http` at
+   `https://app.motir.co/api/mcp`, with no `headers` / `headersHelper`, and carries no `userConfig` —
+   the plugin signs in over OAuth and has no token path.
+7. `check_directory_shape` — The tree has the shape Claude's plugin directory and the claude.ai / Cowork install accept: no
+   top-level `bin/`, no minified or bundled JavaScript (`*.min.js`, `*.bundle.js`, or a `.js` / `.mjs` /
+   `.cjs` line over 2,000 characters), every component path in `plugin.json` inside the plugin root,
+   and a `LICENSE` plus a `README.md` of at least 40 words.
+8. `check_runner` — `scripts/motir` is committed executable (mode 100755) with exactly one `MOTIR_CLI_VERSION=` pin,
+   and that version of `@motir/cli` is published on npm. An unreachable registry is reported as such,
+   never as an unpublished version.
 
+Each item names the `check_*` function that performs it; `main()` calls every one of them once.
 Exits 1 and names every failure. Standard library only.
 """
 
@@ -24,12 +35,28 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET = re.compile(r"(ghp|gho|ghs|ghu|github_pat|mtr|motir_pat)_[A-Za-z0-9_]{10,}")
 NAME = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
+MCP_URL = "https://app.motir.co/api/mcp"
+MAX_JS_LINE = 2000
+MIN_README_WORDS = 40
+CLI_PACKAGE = "@motir/cli"
+RUNNER = "scripts/motir"
+PIN = re.compile(r'^MOTIR_CLI_VERSION="?([^"\s]*)"?\s*$', re.MULTILINE)
 
 errors = []
 
 
 def fail(msg):
     errors.append(msg)
+
+
+def read_text(path):
+    with open(path, encoding="utf-8") as f:
+        return f.read()
+
+
+def read_json(path):
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
 
 
 def frontmatter(text):
@@ -53,7 +80,7 @@ def check_skill(name):
     if not os.path.isfile(path):
         fail(f"skills/{name}: no SKILL.md")
         return
-    text = open(path, encoding="utf-8").read()
+    text = read_text(path)
     fm = frontmatter(text)
     if fm is None:
         fail(f"skills/{name}/SKILL.md: no YAML frontmatter between --- lines")
@@ -77,7 +104,7 @@ def check_skill(name):
         fail(f"skills/{name}: no SYNC.json")
         return
     try:
-        entries = json.load(open(sync_path, encoding="utf-8"))
+        entries = read_json(sync_path)
     except json.JSONDecodeError as e:
         fail(f"skills/{name}/SYNC.json: not valid JSON ({e})")
         return
@@ -97,14 +124,19 @@ def check_skill(name):
             fail(f"{where}: sha256 must be a 64-character lowercase hex digest")
 
 
-def check_secrets():
-    files = subprocess.run(
+def tree_files():
+    """Tracked files plus untracked ones git does not ignore, relative to ROOT."""
+    out = subprocess.run(
         ["git", "-C", ROOT, "ls-files", "--cached", "--others", "--exclude-standard"],
         check=True, capture_output=True, text=True,
     ).stdout.split("\n")
-    for rel in filter(None, files):
+    return [rel for rel in out if rel]
+
+
+def check_secrets():
+    for rel in tree_files():
         try:
-            text = open(os.path.join(ROOT, rel), encoding="utf-8").read()
+            text = read_text(os.path.join(ROOT, rel))
         except (UnicodeDecodeError, FileNotFoundError):
             continue
         for n, line in enumerate(text.split("\n"), 1):
@@ -114,8 +146,8 @@ def check_secrets():
 
 def check_manifests(skills):
     try:
-        plugin = json.load(open(os.path.join(ROOT, ".claude-plugin", "plugin.json"), encoding="utf-8"))
-        market = json.load(open(os.path.join(ROOT, ".claude-plugin", "marketplace.json"), encoding="utf-8"))
+        plugin = read_json(os.path.join(ROOT, ".claude-plugin", "plugin.json"))
+        market = read_json(os.path.join(ROOT, ".claude-plugin", "marketplace.json"))
     except (OSError, json.JSONDecodeError) as e:
         fail(f".claude-plugin: {e}")
         return
@@ -127,7 +159,118 @@ def check_manifests(skills):
         fail(f".claude-plugin/marketplace.json: must offer plugin {plugin.get('name')!r} once, with source './'")
 
 
-def main():
+def check_mcp_server():
+    path = os.path.join(ROOT, ".claude-plugin", "plugin.json")
+    try:
+        plugin = read_json(path)
+    except (OSError, json.JSONDecodeError):
+        return  # check_manifests already named it
+    where = ".claude-plugin/plugin.json"
+    if "userConfig" in plugin:
+        fail(f"{where}: userConfig is not allowed — the plugin signs in over OAuth and has no token field")
+    servers = plugin.get("mcpServers")
+    server = servers.get("motir") if isinstance(servers, dict) else None
+    if not isinstance(server, dict):
+        fail(f"{where}: mcpServers.motir must be declared as an object")
+        return
+    if server.get("type") != "http":
+        fail(f"{where}: mcpServers.motir.type is {server.get('type')!r}, must be 'http'")
+    if server.get("url") != MCP_URL:
+        fail(f"{where}: mcpServers.motir.url is {server.get('url')!r}, must be {MCP_URL!r}")
+    for key in ("headers", "headersHelper"):
+        if key in server:
+            fail(f"{where}: mcpServers.motir.{key} is not allowed — no static credential ships in the plugin")
+
+
+def component_paths(plugin):
+    """Every path-valued component field of plugin.json, as written."""
+    paths = []
+    for key in ("skills", "commands", "agents", "hooks", "mcpServers", "lspServers", "outputStyles"):
+        value = plugin.get(key)
+        if isinstance(value, str):
+            paths.append(value)
+        elif isinstance(value, list):
+            paths.extend(v for v in value if isinstance(v, str))
+    return paths
+
+
+def check_directory_shape():
+    if os.path.isdir(os.path.join(ROOT, "bin")):
+        fail("bin/: a top-level bin/ is not allowed — the claude.ai / Cowork install refuses it")
+    for rel in tree_files():
+        name = os.path.basename(rel)
+        if name.endswith((".min.js", ".bundle.js")):
+            fail(f"{rel}: minified or bundled code is not allowed")
+            continue
+        if not name.endswith((".js", ".mjs", ".cjs")):
+            continue
+        try:
+            text = read_text(os.path.join(ROOT, rel))
+        except (UnicodeDecodeError, FileNotFoundError):
+            continue
+        for n, line in enumerate(text.split("\n"), 1):
+            if len(line) > MAX_JS_LINE:
+                fail(f"{rel}:{n}: a {len(line)}-character line reads as minified or bundled code (max {MAX_JS_LINE})")
+                break
+    try:
+        plugin = read_json(os.path.join(ROOT, ".claude-plugin", "plugin.json"))
+    except (OSError, json.JSONDecodeError):
+        plugin = {}
+    root = os.path.realpath(ROOT)
+    for p in component_paths(plugin):
+        resolved = os.path.realpath(os.path.join(ROOT, p))
+        if os.path.isabs(p) or os.path.commonpath([root, resolved]) != root:
+            fail(f".claude-plugin/plugin.json: component path {p!r} is outside the plugin root")
+    if not os.path.isfile(os.path.join(ROOT, "LICENSE")):
+        fail("LICENSE: missing")
+    readme = os.path.join(ROOT, "README.md")
+    if not os.path.isfile(readme):
+        fail("README.md: missing")
+    else:
+        words = len(read_text(readme).split())
+        if words < MIN_README_WORDS:
+            fail(f"README.md: {words} words, needs at least {MIN_README_WORDS}")
+
+
+def npm_view(spec):
+    """`npm view <spec> version` → (exit code, stripped stdout)."""
+    try:
+        done = subprocess.run(["npm", "view", spec, "version"], capture_output=True, text=True, timeout=120)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return 1, str(e)
+    return done.returncode, done.stdout.strip()
+
+
+def check_runner():
+    path = os.path.join(ROOT, RUNNER)
+    if not os.path.isfile(path):
+        fail(f"{RUNNER}: missing")
+        return
+    staged = subprocess.run(
+        ["git", "-C", ROOT, "ls-files", "-s", "--", RUNNER], check=True, capture_output=True, text=True,
+    ).stdout.split()
+    if not staged or staged[0] != "100755":
+        fail(f"{RUNNER}: must be committed executable (git mode 100755), is {staged[0] if staged else 'untracked'}")
+    pins = PIN.findall(read_text(path))
+    if len(pins) != 1 or not pins[0]:
+        fail(f"{RUNNER}: needs exactly one MOTIR_CLI_VERSION=\"<version>\" line, found {len(pins)}")
+        return
+    pin = pins[0]
+    code, out = npm_view(f"{CLI_PACKAGE}@{pin}")
+    if code == 0 and out == pin:
+        return
+    control, _ = npm_view(CLI_PACKAGE)
+    if control != 0:
+        fail(f"{RUNNER}: could not check MOTIR_CLI_VERSION {pin} — the npm registry is unreachable")
+    else:
+        fail(f"{RUNNER}: MOTIR_CLI_VERSION {pin} is not a published version of {CLI_PACKAGE}")
+
+
+def main(root=None):
+    global ROOT, errors
+    if root is not None:
+        ROOT = root
+    errors = []
     skills_dir = os.path.join(ROOT, "skills")
     skills = sorted(d for d in os.listdir(skills_dir) if os.path.isdir(os.path.join(skills_dir, d)))
     if not skills:
@@ -136,6 +279,9 @@ def main():
         check_skill(name)
     check_secrets()
     check_manifests(skills)
+    check_mcp_server()
+    check_directory_shape()
+    check_runner()
     for e in errors:
         print(f"✘ {e}")
     if errors:

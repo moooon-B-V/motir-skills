@@ -1,0 +1,23 @@
+#!/bin/sh
+# Run the Motir CLI at the ONE version this plugin pins, without a global install.
+# Needs Node.js 22 or newer; `npx` fetches the pinned release once and caches it.
+# validate.py checks that MOTIR_CLI_VERSION is a version published on npm.
+
+MOTIR_CLI_VERSION="0.8.0"
+
+if ! command -v node >/dev/null 2>&1; then
+  echo "motir: needs Node.js 22 or newer (https://nodejs.org); none found" >&2
+  exit 127
+fi
+
+node_version=$(node -p 'process.versions.node')
+node_major=${node_version%%.*}
+case $node_major in
+  '' | *[!0-9]*) node_major=0 ;;
+esac
+if [ "$node_major" -lt 22 ]; then
+  echo "motir: needs Node.js 22 or newer; found $node_version" >&2
+  exit 1
+fi
+
+exec npx --yes "@motir/cli@${MOTIR_CLI_VERSION}" "$@"

@@ -5,13 +5,13 @@
     "url": "https://motir.co"
   },
   "metadata": {
-    "description": "The Motir plugin: skills that let a coding agent work a Motir project through its MCP server."
+    "description": "The Motir plugin: skills that let a coding agent work a Motir project, the Motir MCP server they reach it through (signed into in the browser), and a runner for the pinned `motir` CLI."
   },
   "plugins": [
     {
       "name": "motir",
       "source": "./",
-      "description": "Run the next Motir card end to end, repair a card's red pull requests, log a verified bug, clear the Bugs folder, close a manual card, and be guided through one step by step."
+      "description": "Run the next Motir card end to end, repair a card's red pull requests, log a verified bug, clear the Bugs folder, close a manual card, and be guided through one step by step. Connects the Motir MCP (signed into in the browser) and carries the `motir` CLI runner."
     }
   ]
 }
