@@ -18,12 +18,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Skills, SYNC.json, secrets and manifest agree
+      - name: Skills, SYNC.json, secrets, manifest, directory shape and the runner's npm pin agree
         run: python3 scripts/validate.py
       - name: section-hash.py self-test
         run: python3 scripts/test_section_hash.py
       - name: validate.py MCP-entry and directory-shape checks
         run: python3 scripts/test_validate.py
+      - name: The motir CLI runner (stub node / npx)
+        run: python3 scripts/test_motir.py
       - name: Claude Code accepts the marketplace and plugin manifests, warnings included
         run: |
           npx --yes @anthropic-ai/claude-code@2.1.283 plugin validate . --strict

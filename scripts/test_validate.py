@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""validate.py's MCP-entry and directory-shape checks: each defect fails naming its path, and the
-repository itself passes. Every case copies the repository into a temporary git tree, plants ONE
+"""validate.py's MCP-entry, directory-shape and runner-pin checks: each defect fails naming its path,
+and the repository itself passes. Every case copies the repository into a temporary git tree, plants ONE
 defect and runs validate.main() over it. Standard library only."""
 
 import contextlib
@@ -8,6 +8,7 @@ import importlib.util
 import io
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -26,6 +27,11 @@ def load_validate():
 
 
 validate = load_validate()
+
+
+def published(spec):
+    """Stands in for the npm registry: `@motir/cli@<v>` answers `<v>`, as a published version would."""
+    return 0, spec.rpartition("@")[2]
 
 
 def run(root):
@@ -79,6 +85,8 @@ class Tree:
 
 class ValidateTest(unittest.TestCase):
     def setUp(self):
+        real, validate.npm_view = validate.npm_view, published
+        self.addCleanup(setattr, validate, "npm_view", real)
         self.tree = Tree()
         self.addCleanup(self.tree.cleanup)
 
@@ -132,6 +140,35 @@ class ValidateTest(unittest.TestCase):
     def test_component_path_outside_root(self):
         self.tree.edit_plugin(lambda p: p["skills"].append("../elsewhere"))
         self.assertFailsNaming("../elsewhere")
+
+    def test_runner_not_executable(self):
+        subprocess.run(["git", "-C", self.tree.root, "update-index", "--chmod=-x", "scripts/motir"], check=True)
+        self.assertFailsNaming("scripts/motir: must be committed executable")
+
+    def test_runner_two_pins(self):
+        self.tree.write("scripts/motir", read(self.tree.path("scripts/motir")) + 'MOTIR_CLI_VERSION="0.8.0"\n')
+        self.assertFailsNaming("scripts/motir: needs exactly one MOTIR_CLI_VERSION")
+
+    def test_runner_unpublished_pin(self):
+        validate.npm_view = lambda spec: (1, "") if spec.endswith("@0.8.99") else (0, "0.9.0")
+        self.set_pin("0.8.99")
+        self.assertFailsNaming("scripts/motir: MOTIR_CLI_VERSION 0.8.99 is not a published version")
+
+    def test_registry_unreachable(self):
+        validate.npm_view = lambda spec: (1, "getaddrinfo ENOTFOUND registry.npmjs.org")
+        self.assertFailsNaming("scripts/motir: could not check MOTIR_CLI_VERSION 0.8.0 — the npm registry is unreachable")
+
+    def set_pin(self, version):
+        rel = "scripts/motir"
+        text = re.sub(r'^MOTIR_CLI_VERSION=.*$', f'MOTIR_CLI_VERSION="{version}"', read(self.tree.path(rel)), flags=re.M)
+        with open(self.tree.path(rel), "w", encoding="utf-8") as f:
+            f.write(text)
+        self.tree.add()
+
+
+def read(path):
+    with open(path, encoding="utf-8") as f:
+        return f.read()
 
 
 if __name__ == "__main__":

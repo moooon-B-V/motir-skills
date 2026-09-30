@@ -17,6 +17,9 @@
    top-level `bin/`, no minified or bundled JavaScript (`*.min.js`, `*.bundle.js`, or a `.js` / `.mjs` /
    `.cjs` line over 2,000 characters), every component path in `plugin.json` inside the plugin root,
    and a `LICENSE` plus a `README.md` of at least 40 words.
+8. `scripts/motir` is committed executable (mode 100755) with exactly one `MOTIR_CLI_VERSION=` pin,
+   and that version of `@motir/cli` is published on npm. An unreachable registry is reported as such,
+   never as an unpublished version.
 
 Exits 1 and names every failure. Standard library only.
 """
@@ -34,6 +37,9 @@ SHA256 = re.compile(r"^[0-9a-f]{64}$")
 MCP_URL = "https://app.motir.co/api/mcp"
 MAX_JS_LINE = 2000
 MIN_README_WORDS = 40
+CLI_PACKAGE = "@motir/cli"
+RUNNER = "scripts/motir"
+PIN = re.compile(r'^MOTIR_CLI_VERSION="?([^"\s]*)"?\s*$', re.MULTILINE)
 
 errors = []
 
@@ -225,6 +231,40 @@ def check_directory_shape():
             fail(f"README.md: {words} words, needs at least {MIN_README_WORDS}")
 
 
+def npm_view(spec):
+    """`npm view <spec> version` → (exit code, stripped stdout)."""
+    try:
+        done = subprocess.run(["npm", "view", spec, "version"], capture_output=True, text=True, timeout=120)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return 1, str(e)
+    return done.returncode, done.stdout.strip()
+
+
+def check_runner():
+    path = os.path.join(ROOT, RUNNER)
+    if not os.path.isfile(path):
+        fail(f"{RUNNER}: missing")
+        return
+    staged = subprocess.run(
+        ["git", "-C", ROOT, "ls-files", "-s", "--", RUNNER], check=True, capture_output=True, text=True,
+    ).stdout.split()
+    if not staged or staged[0] != "100755":
+        fail(f"{RUNNER}: must be committed executable (git mode 100755), is {staged[0] if staged else 'untracked'}")
+    pins = PIN.findall(read_text(path))
+    if len(pins) != 1 or not pins[0]:
+        fail(f"{RUNNER}: needs exactly one MOTIR_CLI_VERSION=\"<version>\" line, found {len(pins)}")
+        return
+    pin = pins[0]
+    code, out = npm_view(f"{CLI_PACKAGE}@{pin}")
+    if code == 0 and out == pin:
+        return
+    control, _ = npm_view(CLI_PACKAGE)
+    if control != 0:
+        fail(f"{RUNNER}: could not check MOTIR_CLI_VERSION {pin} — the npm registry is unreachable")
+    else:
+        fail(f"{RUNNER}: MOTIR_CLI_VERSION {pin} is not a published version of {CLI_PACKAGE}")
+
+
 def main(root=None):
     global ROOT, errors
     if root is not None:
@@ -240,6 +280,7 @@ def main(root=None):
     check_manifests(skills)
     check_mcp_server()
     check_directory_shape()
+    check_runner()
     for e in errors:
         print(f"✘ {e}")
     if errors:
