@@ -63,9 +63,10 @@ source. `origin/main` is authoritative, not `HEAD`: when the two hashes differ, 
 Everything here goes through the **Motir MCP server** connected to your agent — the tools are named
 below exactly as the server names them (your client may prefix them, e.g.
 `mcp__motir__list_work_item_todos`). If the Motir tools are not available at all, stop and tell the
-user to connect the MCP first (<https://motir.co/docs/mcp>). If a call fails with a connection error,
-a 401 or a not-found, **stop and report** what you were about to do to which card and step — never
-work around a failed call.
+user how to connect Motir: in Claude Code with the `motir` plugin installed, run `/mcp` and
+authenticate `motir`; otherwise, connect the MCP as described at <https://motir.co/docs/mcp>. If a
+call fails with a connection error, a 401 or a not-found, **stop and report** what you were about to
+do to which card and step — never work around a failed call.
 
 The three to-do tools:
 

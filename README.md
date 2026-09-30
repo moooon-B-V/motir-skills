@@ -9,15 +9,49 @@ They are plain [Agent Skills](https://agentskills.io) — one folder per skill w
 any agent that reads that format can use them, and the repository is also a Claude Code plugin
 marketplace.
 
+## Install in Claude Code
+
+```text
+/plugin marketplace add moooon-B-V/motir-skills
+/plugin install motir@motir-skills
+```
+
+From a local clone, use the path instead: `git clone https://github.com/moooon-B-V/motir-skills.git`,
+then `/plugin marketplace add ./motir-skills` and the same `/plugin install`.
+
+One install brings three things:
+
+- **The six skills** in the table below.
+- **The `motir` MCP server** at `https://app.motir.co/api/mcp`. Claude Code signs into it in the
+  browser the first time it is used — run `/mcp`, pick `motir`, choose **Authenticate** — and on
+  Motir's consent screen you pick the workspace and approve. There is no token to create or paste.
+- **The `motir` CLI**, through the plugin's `scripts/motir` runner. It runs one pinned `@motir/cli`
+  version with `npx`, so nothing is installed globally, and it needs **Node.js 22 or newer**. The CLI
+  signs in on its own (`motir login`); it does not share the MCP's sign-in.
+
+Claude Code lists the skills once the plugin is installed, and `/mcp` shows `motir`. An organisation
+on claude.ai can also add the same plugin for all its members from its plugin settings — see
+Anthropic's [plugin admin guide](https://claude.com/docs/plugins/admin).
+
 ## What you need first
 
 - A Motir account and a project.
-- **The Motir MCP server connected to your agent** — a personal access token from
-  **Settings → Account → Tokens** in Motir, and the server at `https://app.motir.co/api/mcp`.
+- **In Claude Code, nothing else** — the plugin connects Motir (above).
+- **For any other agent, for CI, or for a client without OAuth**, connect the MCP by hand with a
+  personal access token: create one in Motir under **Settings → Account → Tokens**, and point the
+  client at `https://app.motir.co/api/mcp` with the token as a bearer header. In Claude Code that
+  would be:
+
+  ```sh
+  claude mcp add --transport http motir https://app.motir.co/api/mcp \
+    --header "Authorization: Bearer <your-token>"
+  ```
+
   The setup for each agent is at <https://motir.co/docs/mcp>. A token created with the default
   permissions holds everything these skills call; the full list of tools and the permission each one
   needs is at <https://app.motir.co/docs/mcp/tools>.
 - `git`, and the GitHub CLI (`gh`) where a skill reads pull requests.
+- **Node.js 22 or newer**, only for the `motir` CLI runner.
 
 Nothing else: no other credential, and no access to anything but your own project.
 
@@ -32,33 +66,12 @@ Nothing else: no other credential, and no access to anything but your own projec
 | [`motir-guide`](skills/motir-guide/SKILL.md) | `motir guide <key>` · `motir guide` | Walks you through a human card — `executor: human`, whatever its type — one step at a time: claims it, gives ONE step with its notes and the command to copy, checks what it can with read-only means (`dig`, a URL, a CLI `status`) before ticking the step on the card, resumes where an interrupted walk stopped, and closes the card to Done (or leaves it to its pull request's merge) with a summary of what was done and checked. A card with no steps gets proposed steps, written to the card only with your OK. |
 | [`motir-mark`](skills/motir-mark/SKILL.md) | `motir mark <key> done` | Closes a card no pull request can close (a manual card: an account, a secret, a setting), walking its status to Done with a comment. A card that has a pull request is closed by its merge, and the skill says so instead. |
 
-## Install
+## Install in any other agent
 
-The guide with every agent's steps will live at <https://motir.co/docs/skills>. Until then:
-
-**Claude Code, from GitHub**
-
-```text
-/plugin marketplace add moooon-B-V/motir-skills
-/plugin install motir@motir-skills
-```
-
-**Claude Code, from a local clone** — the same two commands, with the path to your clone:
-
-```sh
-git clone https://github.com/moooon-B-V/motir-skills.git
-```
-
-```text
-/plugin marketplace add ./motir-skills
-/plugin install motir@motir-skills
-```
-
-Then ask the agent which skills it has: the ones in the table above are listed.
-
-**Any other agent** — copy the skill folders you want (`skills/<name>/`) into the directory your
-agent loads skills from (for example a project's `.claude/skills/` or `.agents/skills/`), each folder
-keeping its `SKILL.md` and `SYNC.json` together.
+The guide with every agent's steps will live at <https://motir.co/docs/skills>. Until then, copy the
+skill folders you want (`skills/<name>/`) into the directory your agent loads skills from (for example
+a project's `.claude/skills/` or `.agents/skills/`), each folder keeping its `SKILL.md` and
+`SYNC.json` together, and connect the MCP with a token as described under *What you need first*.
 
 ## Contributing
 
@@ -107,12 +120,15 @@ checks these hashes against its own `origin/main` and fails when a condensed sec
 ### Checks
 
 ```sh
-python3 scripts/validate.py          # skills, SYNC.json, secrets, manifests
+python3 scripts/validate.py          # skills, SYNC.json, secrets, manifests, the MCP entry,
+                                     # the directory's shape, and the runner's npm pin
+python3 scripts/test_validate.py     # validate.py's checks, each against a planted defect
+python3 scripts/test_motir.py        # the CLI runner, with stub node / npx
 python3 scripts/test_section_hash.py # the section definition
-claude plugin validate .             # Claude Code accepts the manifests
+claude plugin validate . --strict    # Claude Code accepts the manifests, warnings included
 ```
 
-The `validate` workflow runs all three on every push and pull request. A new skill is added to
+The `validate` workflow runs all of them on every push and pull request. A new skill is added to
 `.claude-plugin/plugin.json`'s `skills` list in the same pull request — the validator refuses a
 folder the manifest does not list.
 

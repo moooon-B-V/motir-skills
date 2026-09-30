@@ -58,9 +58,11 @@ close-out signal, and everything else it did runs as the close-out sweep at the 
 
 Everything here goes through the **Motir MCP server** connected to your agent — the tools are named
 below exactly as the server names them (your client may prefix them, e.g. `mcp__motir__get_work_item`).
-If the Motir tools are not available at all, stop and tell the user to connect the MCP first
-(<https://motir.co/docs/mcp>). If a call fails with a connection error, a 401 or a not-found, **stop
-and report** the change you intended (the key and the target status) — never work around it.
+If the Motir tools are not available at all, stop and tell the user how to connect Motir: in Claude
+Code with the `motir` plugin installed, run `/mcp` and authenticate `motir`; otherwise, connect the MCP
+as described at <https://motir.co/docs/mcp>. If a call fails with a connection error, a 401 or a
+not-found, **stop and report** the change you intended (the key and the target status) — never work
+around it.
 
 1. **Get the key.** `motir mark <key> done` needs a work-item key such as `ACME-12`. No key ⇒ ask
    which card; do not guess one.
