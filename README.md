@@ -127,6 +127,7 @@ python3 scripts/test_motir.py        # the CLI runner, with stub node / npx
 python3 scripts/test_integration.py  # the seams between them, against npm and Claude Code
 python3 scripts/test_section_hash.py # the section definition
 claude plugin validate . --strict    # Claude Code accepts the manifests, warnings included
+sh scripts/install-e2e.sh            # a clean Claude Code installs the plugin (writes install-transcript.txt)
 ```
 
 The `validate` workflow runs all of them on every push and pull request, the tests under `coverage`

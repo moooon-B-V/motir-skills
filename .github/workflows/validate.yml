@@ -34,3 +34,25 @@ jobs:
         run: |
           npx --yes @anthropic-ai/claude-code@2.1.283 plugin validate . --strict
           npx --yes @anthropic-ai/claude-code@2.1.283 plugin validate .claude-plugin/plugin.json --strict
+
+  install-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: A clean Claude Code installs the plugin from this checkout (fresh HOME and CLAUDE_CONFIG_DIR)
+        run: sh scripts/install-e2e.sh "$GITHUB_WORKSPACE"
+        env:
+          TRANSCRIPT: ${{ runner.temp }}/install-transcript.txt
+      - name: Upload the install transcript
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: install-transcript
+          path: ${{ runner.temp }}/install-transcript.txt
+          if-no-files-found: error
