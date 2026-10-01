@@ -25,8 +25,9 @@ runs. The repository root holds the marketplace manifest and this tooling, which
    and that version of `@motir/cli` is published on npm. An unreachable registry is reported as such,
    never as an unpublished version.
 9. `check_listing` — The plugin's `.claude-plugin/plugin.json` names an `icon` that is a square PNG or JPEG inside the plugin,
-   512 to 2048 px on a side and under 2 MB, and sets `privacyPolicyUrl` to an https URL. Claude's plugin
-   directory warns on both, and reads the icon only the first time the plugin is saved or submitted there.
+   512 to 2048 px on a side and under 2 MB, and sets `privacyPolicyUrl` and `termsOfServiceUrl` to https
+   URLs. Claude's plugin directory lists all three, and reads the icon only the first time the plugin is
+   saved or submitted there.
 10. `check_credential_names` — No file in the plugin names a shell variable with a credential-shaped word as
    one of its underscore-separated parts (PWD, PIN, TOKEN, SECRET, KEY, …), as a reference or an
    assignment, or defines a shell function named with one (`pass`, `token`, …). The directory's scanner
@@ -331,9 +332,10 @@ def check_listing():
     if plugin is None:
         return  # check_manifests already named it
     where = f"{PLUGIN}/.claude-plugin/plugin.json"
-    url = plugin.get("privacyPolicyUrl")
-    if not isinstance(url, str) or not url.startswith("https://"):
-        fail(f"{where}: privacyPolicyUrl must be an https URL — the plugin connects to a remote MCP server")
+    for field in ("privacyPolicyUrl", "termsOfServiceUrl"):
+        url = plugin.get(field)
+        if not isinstance(url, str) or not url.startswith("https://"):
+            fail(f"{where}: {field} must be an https URL — the plugin connects to a remote MCP server")
     icon = plugin.get("icon")
     if not isinstance(icon, str) or not icon:
         fail(f"{where}: icon must name a square PNG or JPEG in the plugin")

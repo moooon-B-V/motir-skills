@@ -377,11 +377,20 @@ class ListingTest(TreeCase):
         self.tree.edit_plugin(lambda p: p.update(privacyPolicyUrl="http://motir.co/legal/privacy"))
         self.assertFailsNaming("privacyPolicyUrl must be an https URL")
 
+    def test_no_terms_of_service_url(self):
+        self.tree.edit_plugin(lambda p: p.pop("termsOfServiceUrl"))
+        self.assertFailsNaming("termsOfServiceUrl must be an https URL")
+
+    def test_plain_http_terms_of_service_url(self):
+        self.tree.edit_plugin(lambda p: p.update(termsOfServiceUrl="http://motir.co/legal/terms"))
+        self.assertFailsNaming("termsOfServiceUrl must be an https URL")
+
     def test_malformed_plugin_json_is_named_once(self):
         self.tree.write(PLUGIN + "/.claude-plugin/plugin.json", "{")
         code, out = run(self.tree.root)
         self.assertEqual(code, 1, out)
         self.assertNotIn("privacyPolicyUrl", out)
+        self.assertNotIn("termsOfServiceUrl", out)
 
 
 class CredentialNameTest(TreeCase):
