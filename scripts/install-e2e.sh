@@ -13,10 +13,10 @@ set -u
 
 CLAUDE_CODE="@anthropic-ai/claude-code@2.1.283"
 CHECKOUT=$(cd "${1:-$(dirname "$0")/..}" && pwd)
-TRANSCRIPT=${TRANSCRIPT:-$PWD/install-transcript.txt}
+TRANSCRIPT=${TRANSCRIPT:-$(pwd)/install-transcript.txt}
 SKILLS="motir-fix motir-fix-bugs motir-guide motir-log-bug motir-mark motir-run"
 MCP_URL="https://app.motir.co/api/mcp"
-PIN=$(sed -n 's/^MOTIR_CLI_VERSION="\(.*\)"$/\1/p' "$CHECKOUT/scripts/motir")
+CLI_VERSION=$(sed -n 's/^MOTIR_CLI_VERSION="\(.*\)"$/\1/p' "$CHECKOUT/scripts/motir")
 VERSION=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["version"])' "$CHECKOUT/.claude-plugin/plugin.json")
 
 # npx's cache stays where it was, so the pinned packages are fetched once per machine, not per HOME.
@@ -60,7 +60,7 @@ claude() { npx --yes "$CLAUDE_CODE" "$@"; }
 
 log "Install transcript — $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 log "checkout: $CHECKOUT"
-log "claude code: $CLAUDE_CODE · plugin version: $VERSION · CLI pin: $PIN · node: $(node --version)"
+log "claude code: $CLAUDE_CODE · plugin version: $VERSION · CLI pin: $CLI_VERSION · node: $(node --version)"
 log ""
 
 step "Add the checkout as a marketplace" claude plugin marketplace add "$CHECKOUT"
@@ -117,8 +117,8 @@ pass "no bin/ under installPath"
 
 step "The runner, for real" "$INSTALL_PATH/scripts/motir" --version
 [ "$code" -eq 0 ] || miss "scripts/motir --version exited $code"
-[ "$(tail -n 1 "$OUT")" = "$PIN" ] || miss "scripts/motir --version printed '$(tail -n 1 "$OUT")', not $PIN"
-pass "the installed runner prints $PIN"
+[ "$(tail -n 1 "$OUT")" = "$CLI_VERSION" ] || miss "scripts/motir --version printed '$(tail -n 1 "$OUT")', not $CLI_VERSION"
+pass "the installed runner prints $CLI_VERSION"
 
 EMPTY="$WORK/no-node"
 mkdir -p "$EMPTY"

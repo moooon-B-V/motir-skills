@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""validate.py's MCP-entry, directory-shape and runner-pin checks: each defect fails naming its path,
-and the repository itself passes. Every case copies the repository into a temporary git tree, plants ONE
-defect and runs validate.main() over it. Standard library only."""
+"""validate.py's MCP-entry, directory-shape, runner-pin, listing and credential-name checks: each defect
+fails naming its path, and the repository itself passes. Every case copies the repository into a temporary
+git tree, plants ONE defect and runs validate.main() over it. Standard library only."""
 
 import contextlib
 import importlib.util
@@ -291,6 +291,129 @@ class EveryCheckFailsTest(TreeCase):
         os.makedirs(self.tree.path("skills"))
         self.tree.add()
         self.assertFailsNaming("skills/: no skill folders")
+
+
+def png(width, height):
+    """The bytes of a PNG header declaring width x height — all `image_size` reads."""
+    return (b"\x89PNG\r\n\x1a\n" + b"\x00\x00\x00\x0dIHDR" + width.to_bytes(4, "big")
+            + height.to_bytes(4, "big") + b"\x08\x06\x00\x00\x00")
+
+
+def jpeg(width, height, sof=True):
+    """The bytes of a JPEG: an APP0 segment, then (optionally) a baseline SOF0 declaring width x height."""
+    app0 = b"\xff\xe0" + (16).to_bytes(2, "big") + b"JFIF\x00" + b"\x00" * 9
+    frame = b"\xff\xc0" + (17).to_bytes(2, "big") + b"\x08" + height.to_bytes(2, "big") + width.to_bytes(2, "big")
+    return b"\xff\xd8" + app0 + (frame + b"\x00" * 12 if sof else b"\xff\xd9")
+
+
+class ListingTest(TreeCase):
+    """`check_listing`: the icon and privacy policy URL Claude's plugin directory asks for."""
+
+    ICON = ".claude-plugin/icon.png"
+
+    def write_bytes(self, rel, data):
+        with open(self.tree.path(rel), "wb") as f:
+            f.write(data)
+        self.tree.add()
+
+    def test_shipped_icon_is_a_square_png_in_range(self):
+        kind, width, height = validate.image_size(os.path.join(REPO, self.ICON))
+        self.assertEqual((kind, width), ("png", height))
+        self.assertTrue(512 <= width <= 2048)
+        self.assertLess(os.path.getsize(os.path.join(REPO, self.ICON)), 2 * 1024 * 1024)
+
+    def test_no_icon(self):
+        self.tree.edit_plugin(lambda p: p.pop("icon"))
+        self.assertFailsNaming("icon must name a square PNG or JPEG")
+
+    def test_icon_file_missing(self):
+        os.remove(self.tree.path(self.ICON))
+        self.tree.add()
+        self.assertFailsNaming("the icon plugin.json names does not exist")
+
+    def test_icon_outside_root(self):
+        self.tree.edit_plugin(lambda p: p.update(icon="../icon.png"))
+        self.assertFailsNaming("icon '../icon.png' is outside the plugin root")
+
+    def test_icon_not_square(self):
+        self.write_bytes(self.ICON, png(512, 600))
+        self.assertFailsNaming("512x600, must be square")
+
+    def test_icon_too_small(self):
+        self.write_bytes(self.ICON, png(256, 256))
+        self.assertFailsNaming("256x256, must be square and 512 to 2048 px")
+
+    def test_icon_too_large(self):
+        self.write_bytes(self.ICON, png(4096, 4096))
+        self.assertFailsNaming("4096x4096")
+
+    def test_icon_over_two_megabytes(self):
+        self.write_bytes(self.ICON, png(512, 512) + b"\x00" * (2 * 1024 * 1024))
+        self.assertFailsNaming("must be under 2097152")
+
+    def test_icon_not_an_image(self):
+        self.write_bytes(self.ICON, b"<svg xmlns='http://www.w3.org/2000/svg'/>")
+        self.assertFailsNaming("not a PNG or JPEG")
+
+    def test_jpeg_icon_passes(self):
+        self.write_bytes(".claude-plugin/icon.jpg", jpeg(1024, 1024))
+        self.tree.edit_plugin(lambda p: p.update(icon=".claude-plugin/icon.jpg"))
+        code, out = run(self.tree.root)
+        self.assertEqual(code, 0, out)
+
+    def test_jpeg_without_a_frame_is_not_an_image(self):
+        self.write_bytes(".claude-plugin/icon.jpg", jpeg(1024, 1024, sof=False))
+        self.tree.edit_plugin(lambda p: p.update(icon=".claude-plugin/icon.jpg"))
+        self.assertFailsNaming("not a PNG or JPEG")
+
+    def test_no_privacy_policy_url(self):
+        self.tree.edit_plugin(lambda p: p.pop("privacyPolicyUrl"))
+        self.assertFailsNaming("privacyPolicyUrl must be an https URL")
+
+    def test_plain_http_privacy_policy_url(self):
+        self.tree.edit_plugin(lambda p: p.update(privacyPolicyUrl="http://motir.co/legal/privacy"))
+        self.assertFailsNaming("privacyPolicyUrl must be an https URL")
+
+    def test_malformed_plugin_json_is_named_once(self):
+        self.tree.write(".claude-plugin/plugin.json", "{")
+        code, out = run(self.tree.root)
+        self.assertEqual(code, 1, out)
+        self.assertNotIn("privacyPolicyUrl", out)
+
+
+class CredentialNameTest(TreeCase):
+    """`check_credential_names`: a variable the directory's scanner reads as a credential fails, naming the line.
+    The planted names are assembled from pieces so this file does not itself carry one."""
+
+    D = "$"
+
+    def test_working_directory_reference(self):
+        self.tree.write("skills/motir-run/notes.md", 'd="' + self.D + 'PWD"\n')
+        self.assertFailsNaming("skills/motir-run/notes.md:1: variable PWD reads as a credential (PWD)")
+
+    def test_braced_reference(self):
+        self.tree.write("scripts/x.sh", "curl -H " + self.D + "{MOTIR_" + "TOKEN} https://app.motir.co\n")
+        self.assertFailsNaming("scripts/x.sh:1: variable MOTIR_TOKEN reads as a credential (TOKEN)")
+
+    def test_assignment(self):
+        self.tree.write("scripts/x.sh", "#!/bin/sh\n" + "PIN" + "=$(cat scripts/motir)\n")
+        self.assertFailsNaming("scripts/x.sh:2: variable PIN reads as a credential (PIN)")
+
+    def test_exported_assignment(self):
+        self.tree.write("scripts/x.sh", "export API_" + "KEY=abc\n")
+        self.assertFailsNaming("scripts/x.sh:1: variable API_KEY reads as a credential (KEY)")
+
+    def test_two_references_on_one_line_are_named_once(self):
+        self.tree.write("scripts/x.sh", "echo " + self.D + "PIN " + self.D + "PIN\n")
+        code, out = run(self.tree.root)
+        self.assertEqual(code, 1, out)
+        self.assertEqual(out.count("scripts/x.sh:1: variable PIN"), 1, out)
+
+    def test_plain_names_pass(self):
+        self.tree.write("scripts/x.sh", "CLI_VERSION=1\necho " + self.D + "CHECKOUT " + self.D + "(pwd)\n"
+                        + "PINNED=1; KEYS=2\nkey=3\n")
+        code, out = run(self.tree.root)
+        self.assertEqual(code, 0, out)
 
 
 class NpmViewTest(unittest.TestCase):
