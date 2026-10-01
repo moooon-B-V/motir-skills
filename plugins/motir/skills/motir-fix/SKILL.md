@@ -1,6 +1,6 @@
 ---
 name: motir-fix
-description: Repair ONE Motir card's red pull requests after the run that opened them has ended — `motir fix <KEY>`. Use when the user asks to fix, repair or rescue a card's failing, red or conflicting pull request, one the merge queue threw out, or a story whose acceptance video came back with Re-run. It claims the repair so nobody else pushes over it, checks out each pull request's OWN branch (never a new one), keeps the repair alive while it works, merges the base and fixes what the failing check named — up to five attempts — re-records the acceptance video once CI is green on a re-run, and closes the repair with how it ended. It never moves the card's status, opens a pull request or merges. NOT for `motir fix bugs` (clearing the Bugs folder — that is the `motir-fix-bugs` skill) and not for building a card (`motir-run`).
+description: Repair ONE Motir card's red pull requests after the run that opened them has ended — `motir fix <KEY>`. Use when the user asks to fix, repair or rescue a card's failing, red or conflicting pull request, one the merge queue threw out, or a story whose acceptance video came back with Re-run. It claims the repair so nobody else pushes over it, checks out each pull request's OWN branch (never a new one), keeps the repair alive while it works, merges the base and fixes what the failing check named — up to five attempts — re-records the acceptance video once CI is green on a re-run and gets it re-published — by CI where the repository's lane publishes, over MCP otherwise — and closes the repair with how it ended. It never moves the card's status, opens a pull request or merges. NOT for `motir fix bugs` (clearing the Bugs folder — that is the `motir-fix-bugs` skill) and not for building a card (`motir-run`).
 ---
 
 # `motir fix <KEY>` — repair a card's red pull requests on their own branches
@@ -167,12 +167,26 @@ problem is what a reviewer saw in the acceptance video; `acceptanceRefusal` carr
    reviewer should re-plan the story in Motir. **Do not record the video yet.** If the steps a person
    follows to test it changed, publish them again with `publish_test_instructions` on the story.
 2. **Step 4**, unchanged.
-3. **Only once CI is green:** run the story's acceptance spec with recording on, then publish it —
-   `create_acceptance_upload { key }` mints an upload URL, PUT the clip to it (`Content-Type:
-   video/webm`), then `publish_acceptance_result` with the pathname it returned, the chapters, the
-   commit sha you pushed and the card key. **The receipt id it returns is the only proof it
-   published** — report it. A red spec publishes nothing. If this turn fails ⇒ step 6 with `halted`,
-   saying CI is green but the video was not re-recorded.
+3. **Only once CI is green:** first find out WHO publishes the receipt. In the checkout that holds
+   the story's acceptance spec, run:
+
+   ```
+   grep -rlE 'uses:\s*\./\.github/actions/upload-acceptance-video' .github/workflows/
+   ```
+
+   - **It prints a file** ⇒ that repository's acceptance lane publishes the receipt itself, from the
+     green pull-request run on the commit you pushed. **Publish nothing.** Run the acceptance spec
+     once, to confirm it is green, then read the receipt id from that CI run's `Publish the
+     acceptance receipt` step and report it as CI's, with the run's link — or say the run is still
+     going.
+   - **It prints nothing** ⇒ no lane publishes there, and you do: run the spec with recording on,
+     then `create_acceptance_upload { key }` mints an upload URL, PUT the clip to it (`Content-Type:
+     video/webm`), then `publish_acceptance_result` with the pathname it returned, the chapters, the
+     commit sha you pushed and the card key. **Here the receipt id it returns is the only proof it
+     published** — report it.
+
+   A red spec publishes nothing. If this turn fails ⇒ step 6 with `halted`, saying CI is green but
+   the video was not re-recorded.
 
 ### 6. Close it — on every exit
 
@@ -180,7 +194,7 @@ problem is what a reviewer saw in the acceptance video; `acceptanceRefusal` carr
 
 | how it ended | `outcome` |
 |---|---|
-| every pull request green (and, on a re-run, the video published) | `green` |
+| every pull request green (and, on a re-run, the receipt published — by CI where the lane publishes) | `green` |
 | the five attempts are spent | `gave_up` |
 | a checkout stop, a failure you could not fix, an attempt that pushed nothing, a structural re-run, a failed recording, an error | `halted` |
 | the person stopped you, or the session is ending first | `interrupted` |
@@ -189,13 +203,17 @@ problem is what a reviewer saw in the acceptance video; `acceptanceRefusal` carr
 again. A repair left open reads *being fixed* for five more minutes and refuses every other fixer. The
 only exit without a close is step 3's `open: false`, where it is already closed.
 
+A green repair whose lane publishes closes `green` once the spec is confirmed green — do not hold it open
+waiting for CI's publish step.
+
 **And the close is your only write to the card:** no `transition_status`, no link, no merge.
 
 ### 7. Report
 
 The card and the outcome you closed with; each pull request (`repo#number`), its branch and final CI
 state — naming the checks still failing on `gave_up` or `halted`; the attempts used out of five; on a
-re-run, the acceptance receipt id (or why there is none); and what the person does next — nothing on
+re-run, the acceptance receipt id and WHO published it — CI (with the run's link) or your MCP publish
+(or why there is none yet); and what the person does next — nothing on
 green (CI moves the card), or look at the named failure and run `motir fix <KEY>` again.
 
 ### Never
@@ -205,5 +223,6 @@ green (CI moves the card), or look at the named failure and run `motir fix <KEY>
 - A second repair over a `taken` one, or a push after a touch answered `open: false`.
 - A reset, removal, clean, stash or re-point of a worktree you did not create.
 - A claimed repair left open.
-- An acceptance video recorded before CI is green, or reported without a receipt id.
+- An acceptance video recorded before CI is green, reported without a receipt id, or a receipt CI
+  published reported as yours.
 - Answering `motir fix bugs` — that is the `motir-fix-bugs` skill.
