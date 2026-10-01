@@ -16,8 +16,9 @@ CHECKOUT=$(cd "${1:-$(dirname "$0")/..}" && pwd)
 TRANSCRIPT=${TRANSCRIPT:-$(pwd)/install-transcript.txt}
 SKILLS="motir-fix motir-fix-bugs motir-guide motir-log-bug motir-mark motir-run"
 MCP_URL="https://app.motir.co/api/mcp"
-CLI_VERSION=$(sed -n 's/^MOTIR_CLI_VERSION="\(.*\)"$/\1/p' "$CHECKOUT/scripts/motir")
-VERSION=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["version"])' "$CHECKOUT/.claude-plugin/plugin.json")
+PLUGIN="$CHECKOUT/plugins/motir"
+CLI_VERSION=$(sed -n 's/^MOTIR_CLI_VERSION="\(.*\)"$/\1/p' "$PLUGIN/scripts/motir")
+VERSION=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["version"])' "$PLUGIN/.claude-plugin/plugin.json")
 
 # npx's cache stays where it was, so the pinned packages are fetched once per machine, not per HOME.
 NPM_CONFIG_CACHE=${NPM_CONFIG_CACHE:-$(npm config get cache)}

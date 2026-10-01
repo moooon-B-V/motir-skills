@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "motir",
-      "source": "./",
+      "source": "./plugins/motir",
       "description": "Run the next Motir card end to end, repair a card's red pull requests, log a verified bug, clear the Bugs folder, close a manual card, and be guided through one step by step. Connects the Motir MCP (signed into in the browser) and carries the `motir` CLI runner."
     }
   ]

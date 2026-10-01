@@ -18,6 +18,7 @@ import unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
+PLUGIN = "plugins/motir"
 
 
 def load_validate():
@@ -75,7 +76,7 @@ class Tree:
         self.add()
 
     def edit_plugin(self, change):
-        rel = ".claude-plugin/plugin.json"
+        rel = PLUGIN + "/.claude-plugin/plugin.json"
         plugin = json.load(open(self.path(rel), encoding="utf-8"))
         change(plugin)
         self.write(rel, json.dumps(plugin, indent=2) + "\n")
@@ -110,8 +111,8 @@ class ValidateTest(TreeCase):
         self.assertEqual(code, 0, out)
 
     def test_top_level_bin(self):
-        self.tree.write("bin/motir", "#!/bin/sh\n")
-        self.assertFailsNaming("bin/")
+        self.tree.write(PLUGIN + "/bin/motir", "#!/bin/sh\n")
+        self.assertFailsNaming(PLUGIN + "/bin/: a bin/ at the plugin's root")
 
     def test_mcp_headers(self):
         self.tree.edit_plugin(lambda p: p["mcpServers"]["motir"].update(headers={"Authorization": "Bearer x"}))
@@ -130,13 +131,13 @@ class ValidateTest(TreeCase):
         self.assertFailsNaming("scripts/vendor.min.js")
 
     def test_missing_license(self):
-        os.remove(self.tree.path("LICENSE"))
+        os.remove(self.tree.path(PLUGIN + "/LICENSE"))
         self.tree.add()
-        self.assertFailsNaming("LICENSE")
+        self.assertFailsNaming(PLUGIN + "/LICENSE: missing")
 
     def test_short_readme(self):
-        self.tree.write("README.md", " ".join(["word"] * 39) + "\n")
-        self.assertFailsNaming("README.md")
+        self.tree.write(PLUGIN + "/README.md", " ".join(["word"] * 39) + "\n")
+        self.assertFailsNaming(PLUGIN + "/README.md: 39 words")
 
     def test_long_js_line(self):
         self.tree.write("scripts/tool.js", "x" * 2001 + "\n")
@@ -147,11 +148,12 @@ class ValidateTest(TreeCase):
         self.assertFailsNaming("../elsewhere")
 
     def test_runner_not_executable(self):
-        subprocess.run(["git", "-C", self.tree.root, "update-index", "--chmod=-x", "scripts/motir"], check=True)
+        subprocess.run(["git", "-C", self.tree.root, "update-index", "--chmod=-x", PLUGIN + "/scripts/motir"], check=True)
         self.assertFailsNaming("scripts/motir: must be committed executable")
 
     def test_runner_two_pins(self):
-        self.tree.write("scripts/motir", read(self.tree.path("scripts/motir")) + 'MOTIR_CLI_VERSION="0.8.0"\n')
+        rel = PLUGIN + "/scripts/motir"
+        self.tree.write(rel, read(self.tree.path(rel)) + 'MOTIR_CLI_VERSION="0.8.0"\n')
         self.assertFailsNaming("scripts/motir: needs exactly one MOTIR_CLI_VERSION")
 
     def test_runner_unpublished_pin(self):
@@ -164,7 +166,7 @@ class ValidateTest(TreeCase):
         self.assertFailsNaming("scripts/motir: could not check MOTIR_CLI_VERSION 0.8.0 — the npm registry is unreachable")
 
     def set_pin(self, version):
-        rel = "scripts/motir"
+        rel = PLUGIN + "/scripts/motir"
         text = re.sub(r'^MOTIR_CLI_VERSION=.*$', f'MOTIR_CLI_VERSION="{version}"', read(self.tree.path(rel)), flags=re.M)
         with open(self.tree.path(rel), "w", encoding="utf-8") as f:
             f.write(text)
@@ -174,8 +176,8 @@ class ValidateTest(TreeCase):
 class EveryCheckFailsTest(TreeCase):
     """The failure branches of the other checks, one planted defect each."""
 
-    SKILL = "skills/motir-run/SKILL.md"
-    SYNC = "skills/motir-run/SYNC.json"
+    SKILL = PLUGIN + "/skills/motir-run/SKILL.md"
+    SYNC = PLUGIN + "/skills/motir-run/SYNC.json"
 
     def set_skill_md(self, text):
         self.tree.write(self.SKILL, text)
@@ -202,8 +204,8 @@ class EveryCheckFailsTest(TreeCase):
         self.assertFailsNaming("frontmatter name is 'motir-walk'")
 
     def test_bad_folder_name(self):
-        os.rename(self.tree.path("skills/motir-mark"), self.tree.path("skills/Motir_Mark"))
-        self.tree.write("skills/Motir_Mark/SKILL.md", self.frontmatter(name="Motir_Mark"))
+        os.rename(self.tree.path(PLUGIN + "/skills/motir-mark"), self.tree.path(PLUGIN + "/skills/Motir_Mark"))
+        self.tree.write(PLUGIN + "/skills/Motir_Mark/SKILL.md", self.frontmatter(name="Motir_Mark"))
         self.assertFailsNaming("skills/Motir_Mark: folder name must be")
 
     def test_empty_description(self):
@@ -253,7 +255,7 @@ class EveryCheckFailsTest(TreeCase):
         self.assertEqual(code, 0, out)
 
     def test_malformed_plugin_json(self):
-        self.tree.write(".claude-plugin/plugin.json", "{")
+        self.tree.write(PLUGIN + "/.claude-plugin/plugin.json", "{")
         self.assertFailsNaming(".claude-plugin:")
 
     def test_marketplace_does_not_offer_the_plugin(self):
@@ -277,18 +279,18 @@ class EveryCheckFailsTest(TreeCase):
         self.assertFailsNaming("component path '../commands' is outside the plugin root")
 
     def test_missing_readme(self):
-        os.remove(self.tree.path("README.md"))
+        os.remove(self.tree.path(PLUGIN + "/README.md"))
         self.tree.add()
-        self.assertFailsNaming("README.md: missing")
+        self.assertFailsNaming(PLUGIN + "/README.md: missing")
 
     def test_missing_runner(self):
-        os.remove(self.tree.path("scripts/motir"))
+        os.remove(self.tree.path(PLUGIN + "/scripts/motir"))
         self.tree.add()
         self.assertFailsNaming("scripts/motir: missing")
 
     def test_no_skill_folders(self):
-        shutil.rmtree(self.tree.path("skills"))
-        os.makedirs(self.tree.path("skills"))
+        shutil.rmtree(self.tree.path(PLUGIN + "/skills"))
+        os.makedirs(self.tree.path(PLUGIN + "/skills"))
         self.tree.add()
         self.assertFailsNaming("skills/: no skill folders")
 
@@ -309,7 +311,7 @@ def jpeg(width, height, sof=True):
 class ListingTest(TreeCase):
     """`check_listing`: the icon and privacy policy URL Claude's plugin directory asks for."""
 
-    ICON = ".claude-plugin/icon.png"
+    ICON = PLUGIN + "/.claude-plugin/icon.png"
 
     def write_bytes(self, rel, data):
         with open(self.tree.path(rel), "wb") as f:
@@ -356,13 +358,14 @@ class ListingTest(TreeCase):
         self.assertFailsNaming("not a PNG or JPEG")
 
     def test_jpeg_icon_passes(self):
-        self.write_bytes(".claude-plugin/icon.jpg", jpeg(1024, 1024))
+        os.remove(self.tree.path(self.ICON))
+        self.write_bytes(PLUGIN + "/.claude-plugin/icon.jpg", jpeg(1024, 1024))
         self.tree.edit_plugin(lambda p: p.update(icon=".claude-plugin/icon.jpg"))
         code, out = run(self.tree.root)
         self.assertEqual(code, 0, out)
 
     def test_jpeg_without_a_frame_is_not_an_image(self):
-        self.write_bytes(".claude-plugin/icon.jpg", jpeg(1024, 1024, sof=False))
+        self.write_bytes(PLUGIN + "/.claude-plugin/icon.jpg", jpeg(1024, 1024, sof=False))
         self.tree.edit_plugin(lambda p: p.update(icon=".claude-plugin/icon.jpg"))
         self.assertFailsNaming("not a PNG or JPEG")
 
@@ -375,45 +378,93 @@ class ListingTest(TreeCase):
         self.assertFailsNaming("privacyPolicyUrl must be an https URL")
 
     def test_malformed_plugin_json_is_named_once(self):
-        self.tree.write(".claude-plugin/plugin.json", "{")
+        self.tree.write(PLUGIN + "/.claude-plugin/plugin.json", "{")
         code, out = run(self.tree.root)
         self.assertEqual(code, 1, out)
         self.assertNotIn("privacyPolicyUrl", out)
 
 
 class CredentialNameTest(TreeCase):
-    """`check_credential_names`: a variable the directory's scanner reads as a credential fails, naming the line.
-    The planted names are assembled from pieces so this file does not itself carry one."""
+    """`check_credential_names`: inside the plugin, a variable or function the directory's scanner reads as a
+    credential fails, naming the line; the repository's own tooling outside the plugin is not scanned.
+    Lines are planted in the plugin's README, which the bundle allows, and the planted names are assembled
+    from pieces so this file does not itself carry one."""
 
     D = "$"
+    README = PLUGIN + "/README.md"
+
+    def plant(self, text):
+        self.tree.write(self.README, read(self.tree.path(self.README)) + text)
+        return len(read(self.tree.path(self.README)).split("\n")) - 1
 
     def test_working_directory_reference(self):
-        self.tree.write("skills/motir-run/notes.md", 'd="' + self.D + 'PWD"\n')
-        self.assertFailsNaming("skills/motir-run/notes.md:1: variable PWD reads as a credential (PWD)")
+        n = self.plant('d="' + self.D + 'PWD"\n')
+        self.assertFailsNaming(f"{self.README}:{n}: variable PWD reads as a credential (PWD)")
 
     def test_braced_reference(self):
-        self.tree.write("scripts/x.sh", "curl -H " + self.D + "{MOTIR_" + "TOKEN} https://app.motir.co\n")
-        self.assertFailsNaming("scripts/x.sh:1: variable MOTIR_TOKEN reads as a credential (TOKEN)")
+        n = self.plant("curl -H " + self.D + "{MOTIR_" + "TOKEN} https://app.motir.co\n")
+        self.assertFailsNaming(f"{self.README}:{n}: variable MOTIR_TOKEN reads as a credential (TOKEN)")
 
     def test_assignment(self):
-        self.tree.write("scripts/x.sh", "#!/bin/sh\n" + "PIN" + "=$(cat scripts/motir)\n")
-        self.assertFailsNaming("scripts/x.sh:2: variable PIN reads as a credential (PIN)")
+        n = self.plant("PIN" + "=$(cat scripts/motir)\n")
+        self.assertFailsNaming(f"{self.README}:{n}: variable PIN reads as a credential (PIN)")
 
     def test_exported_assignment(self):
-        self.tree.write("scripts/x.sh", "export API_" + "KEY=abc\n")
-        self.assertFailsNaming("scripts/x.sh:1: variable API_KEY reads as a credential (KEY)")
+        n = self.plant("export API_" + "KEY=abc\n")
+        self.assertFailsNaming(f"{self.README}:{n}: variable API_KEY reads as a credential (KEY)")
+
+    def test_function_named_pass(self):
+        n = self.plant("pa" + 'ss() { echo "ok $1"; }\n')
+        self.assertFailsNaming(f"{self.README}:{n}: function pass reads as a credential (pass)")
+
+    def test_function_keyword_form(self):
+        n = self.plant("function get_" + "token {\n")
+        self.assertFailsNaming(f"{self.README}:{n}: function get_token reads as a credential (token)")
 
     def test_two_references_on_one_line_are_named_once(self):
-        self.tree.write("scripts/x.sh", "echo " + self.D + "PIN " + self.D + "PIN\n")
+        n = self.plant("echo " + self.D + "PIN " + self.D + "PIN\n")
         code, out = run(self.tree.root)
         self.assertEqual(code, 1, out)
-        self.assertEqual(out.count("scripts/x.sh:1: variable PIN"), 1, out)
+        self.assertEqual(out.count(f"{self.README}:{n}: variable PIN"), 1, out)
 
     def test_plain_names_pass(self):
-        self.tree.write("scripts/x.sh", "CLI_VERSION=1\necho " + self.D + "CHECKOUT " + self.D + "(pwd)\n"
-                        + "PINNED=1; KEYS=2\nkey=3\n")
+        self.plant("CLI_VERSION=1\necho " + self.D + "CHECKOUT " + self.D + "(pwd)\n"
+                   + "PINNED=1; KEYS=2\nkey=3\nok() { :; }\n")
         code, out = run(self.tree.root)
         self.assertEqual(code, 0, out)
+
+    def test_tooling_outside_the_plugin_is_not_scanned(self):
+        self.tree.write("scripts/x.sh", "pa" + "ss() { :; }\n" + "PIN" + "=1\n")
+        code, out = run(self.tree.root)
+        self.assertEqual(code, 0, out)
+
+
+class BundleTest(TreeCase):
+    """`check_bundle` and the marketplace source: the plugin folder ships only what a user runs."""
+
+    def test_a_test_file_in_the_plugin_fails(self):
+        self.tree.write(PLUGIN + "/scripts/test_motir.py", "print(1)\n")
+        self.assertFailsNaming(PLUGIN + "/scripts/test_motir.py: does not belong in the plugin")
+
+    def test_an_extra_file_in_a_skill_fails(self):
+        self.tree.write(PLUGIN + "/skills/motir-run/notes.md", "notes\n")
+        self.assertFailsNaming(PLUGIN + "/skills/motir-run/notes.md: does not belong in the plugin")
+
+    def test_an_icon_the_manifest_does_not_name_fails(self):
+        self.tree.write(PLUGIN + "/.claude-plugin/old-icon.png", "x")
+        self.assertFailsNaming(PLUGIN + "/.claude-plugin/old-icon.png: does not belong in the plugin")
+
+    def test_files_beside_the_plugin_are_fine(self):
+        self.tree.write("plugins/README.md", "about the plugins folder\n")
+        code, out = run(self.tree.root)
+        self.assertEqual(code, 0, out)
+
+    def test_marketplace_offering_the_repository_root_fails(self):
+        rel = ".claude-plugin/marketplace.json"
+        market = json.loads(read(self.tree.path(rel)))
+        market["plugins"][0]["source"] = "./"
+        self.tree.write(rel, json.dumps(market))
+        self.assertFailsNaming("marketplace.json: must offer plugin 'motir' once, with source './plugins/motir'")
 
 
 class NpmViewTest(unittest.TestCase):

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""scripts/motir, driven with stub `node` / `npx` executables on a PATH of their own: no Node refuses
+"""The plugin's runner (plugins/motir/scripts/motir), driven with stub `node` / `npx` executables on a PATH of their own: no Node refuses
 in one line, Node below 22 refuses without running npx, and Node 22 hands npx the pinned package plus
 every argument verbatim and returns its exit code. Standard library only."""
 
@@ -11,7 +11,7 @@ import sys
 import tempfile
 import unittest
 
-RUNNER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "motir")
+RUNNER = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "plugins", "motir", "scripts", "motir")
 SH = shutil.which("sh")
 with open(RUNNER, encoding="utf-8") as _f:
     CLI_VERSION = re.search(r'^MOTIR_CLI_VERSION="([^"]+)"', _f.read(), re.M).group(1)
