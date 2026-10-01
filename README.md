@@ -59,23 +59,40 @@ Nothing else: no other credential, and no access to anything but your own projec
 
 | Skill | Say | What it does |
 |---|---|---|
-| [`motir-run`](skills/motir-run/SKILL.md) | `motir run` · `motir run <key>` · `motir next` | Closes out merged work, claims the card, builds it on its own branch, opens ONE pull request linked to the card, moves it to Implemented and publishes How to test. A card that cannot be built as written is handed to Motir's planner with the correction, not built. |
-| [`motir-log-bug`](skills/motir-log-bug/SKILL.md) | `motir log bug <what is wrong>` | Root-causes the defect first, looks for the card someone already filed, then files ONE bug — under the story it blocks, or in the project's `Bugs` folder — linked to the card it was found on. |
-| [`motir-fix`](skills/motir-fix/SKILL.md) | `motir fix <KEY>` | Repairs ONE card's red pull requests after the run that opened them has ended — failing checks, a merge-queue ejection, or an acceptance video sent back with Re-run. Claims the repair so nobody pushes over it, fixes on each pull request's OWN branch (never a new one), up to five attempts, re-records the acceptance video once CI is green, and closes the repair with how it ended. Never moves the card's status or merges. Not `motir fix bugs` — that is `motir-fix-bugs`, the row below. |
-| [`motir-fix-bugs`](skills/motir-fix-bugs/SKILL.md) | `motir fix bugs` · `motir fix bugs <limit>` | Works through the project's `Bugs` folder one bug at a time, oldest first. Each bug gets exactly one outcome: ONE pull request fixing only that bug, a `blocked_by` edge to the card it genuinely waits on, or a comment with the evidence when it is already fixed, cannot be reproduced or needs a person. Ends by itself and reports every bug. |
-| [`motir-guide`](skills/motir-guide/SKILL.md) | `motir guide <key>` · `motir guide` | Walks you through a human card — `executor: human`, whatever its type — one step at a time: claims it, gives ONE step with its notes and the command to copy, checks what it can with read-only means (`dig`, a URL, a CLI `status`) before ticking the step on the card, resumes where an interrupted walk stopped, and closes the card to Done (or leaves it to its pull request's merge) with a summary of what was done and checked. A card with no steps gets proposed steps, written to the card only with your OK. |
-| [`motir-mark`](skills/motir-mark/SKILL.md) | `motir mark <key> done` | Closes a card no pull request can close (a manual card: an account, a secret, a setting), walking its status to Done with a comment. A card that has a pull request is closed by its merge, and the skill says so instead. |
+| [`motir-run`](plugins/motir/skills/motir-run/SKILL.md) | `motir run` · `motir run <key>` · `motir next` | Closes out merged work, claims the card, builds it on its own branch, opens ONE pull request linked to the card, moves it to Implemented and publishes How to test. A card that cannot be built as written is handed to Motir's planner with the correction, not built. |
+| [`motir-log-bug`](plugins/motir/skills/motir-log-bug/SKILL.md) | `motir log bug <what is wrong>` | Root-causes the defect first, looks for the card someone already filed, then files ONE bug — under the story it blocks, or in the project's `Bugs` folder — linked to the card it was found on. |
+| [`motir-fix`](plugins/motir/skills/motir-fix/SKILL.md) | `motir fix <KEY>` | Repairs ONE card's red pull requests after the run that opened them has ended — failing checks, a merge-queue ejection, or an acceptance video sent back with Re-run. Claims the repair so nobody pushes over it, fixes on each pull request's OWN branch (never a new one), up to five attempts, re-records the acceptance video once CI is green, and closes the repair with how it ended. Never moves the card's status or merges. Not `motir fix bugs` — that is `motir-fix-bugs`, the row below. |
+| [`motir-fix-bugs`](plugins/motir/skills/motir-fix-bugs/SKILL.md) | `motir fix bugs` · `motir fix bugs <limit>` | Works through the project's `Bugs` folder one bug at a time, oldest first. Each bug gets exactly one outcome: ONE pull request fixing only that bug, a `blocked_by` edge to the card it genuinely waits on, or a comment with the evidence when it is already fixed, cannot be reproduced or needs a person. Ends by itself and reports every bug. |
+| [`motir-guide`](plugins/motir/skills/motir-guide/SKILL.md) | `motir guide <key>` · `motir guide` | Walks you through a human card — `executor: human`, whatever its type — one step at a time: claims it, gives ONE step with its notes and the command to copy, checks what it can with read-only means (`dig`, a URL, a CLI `status`) before ticking the step on the card, resumes where an interrupted walk stopped, and closes the card to Done (or leaves it to its pull request's merge) with a summary of what was done and checked. A card with no steps gets proposed steps, written to the card only with your OK. |
+| [`motir-mark`](plugins/motir/skills/motir-mark/SKILL.md) | `motir mark <key> done` | Closes a card no pull request can close (a manual card: an account, a secret, a setting), walking its status to Done with a comment. A card that has a pull request is closed by its merge, and the skill says so instead. |
 
 ## Install in any other agent
 
 The guide with every agent's steps will live at <https://motir.co/docs/skills>. Until then, copy the
-skill folders you want (`skills/<name>/`) into the directory your agent loads skills from (for example
+skill folders you want (`plugins/motir/skills/<name>/`) into the directory your agent loads skills from (for example
 a project's `.claude/skills/` or `.agents/skills/`), each folder keeping its `SKILL.md` and
 `SYNC.json` together, and connect the MCP with a token as described under *What you need first*.
 
 ## Contributing
 
 Each skill is ONE copy with TWO modes, and every new skill follows the same shape.
+
+### Layout — the plugin is a folder of its own
+
+```text
+.claude-plugin/marketplace.json   the marketplace: offers `motir` from ./plugins/motir
+plugins/motir/                    THE PLUGIN — exactly what Claude Code installs
+  .claude-plugin/plugin.json        its manifest (version, skills, the `motir` MCP server, listing fields)
+  .claude-plugin/icon.png           the listing icon
+  skills/<name>/SKILL.md, SYNC.json the six skills
+  scripts/motir                     the pinned CLI runner
+  README.md, LICENSE
+scripts/                          this repository's tooling: the validator, its tests, the install transcript
+```
+
+Claude's plugin directory scans everything inside the plugin folder as code a user may run, and holds
+a plugin for review over what it finds there, tests included. So nothing goes into `plugins/motir/`
+except what a user runs: `scripts/validate.py` fails on any other file there.
 
 ### The two-mode `SKILL.md`
 
@@ -96,7 +113,7 @@ commands) belong to the target repository's own `CLAUDE.md` / `AGENTS.md`, not h
 
 ### `SYNC.json` — what each procedure was written against
 
-Every skill carries `skills/<name>/SYNC.json`, one entry per runbook section its standalone procedure
+Every skill carries `plugins/motir/skills/<name>/SYNC.json`, one entry per runbook section its standalone procedure
 condenses:
 
 ```json
@@ -109,8 +126,8 @@ and everything up to the next heading of the same or a higher level, fenced code
 whitespace ignored — and both this repository and the runbook use it:
 
 ```sh
-python3 scripts/section-hash.py --verify <runbook-checkout> skills/*/SYNC.json   # does each still match?
-python3 scripts/section-hash.py --update <runbook-checkout> skills/<name>/SYNC.json
+python3 scripts/section-hash.py --verify <runbook-checkout> plugins/motir/skills/*/SYNC.json   # does each still match?
+python3 scripts/section-hash.py --update <runbook-checkout> plugins/motir/skills/<name>/SYNC.json
 ```
 
 Run `--update` only after re-reading the drifted sections and bringing the procedure up to date: the
@@ -122,25 +139,27 @@ checks these hashes against its own `origin/main` and fails when a condensed sec
 ```sh
 python3 scripts/validate.py          # skills, SYNC.json, secrets, manifests, the MCP entry,
                                      # the directory's shape, the runner's npm pin, the listing's
-                                     # icon and privacy URL, and no credential-named variables
+                                     # icon and privacy URL, no credential-named variables or
+                                     # functions, and nothing in the plugin but what ships
 python3 scripts/test_validate.py     # validate.py's checks, each against a planted defect
 python3 scripts/test_motir.py        # the CLI runner, with stub node / npx
 python3 scripts/test_integration.py  # the seams between them, against npm and Claude Code
 python3 scripts/test_section_hash.py # the section definition
-claude plugin validate . --strict    # Claude Code accepts the manifests, warnings included
+claude plugin validate . --strict              # Claude Code accepts the marketplace, warnings included
+claude plugin validate plugins/motir --strict  # ... and the plugin
 sh scripts/install-e2e.sh            # a clean Claude Code installs the plugin (writes install-transcript.txt)
 ```
 
 The `validate` workflow runs all of them on every push and pull request, the tests under `coverage`
 with a 90% line-and-branch floor on `scripts/validate.py`. A new skill is added to
-`.claude-plugin/plugin.json`'s `skills` list in the same pull request — the validator refuses a
+`plugins/motir/.claude-plugin/plugin.json`'s `skills` list in the same pull request — the validator refuses a
 folder the manifest does not list.
 
 ### Releasing
 
 `main` is protected: every change is a reviewed pull request. A release is cut from what has merged:
 
-1. A pull request bumps `version` in `.claude-plugin/plugin.json` (semantic versioning — a new skill
+1. A pull request bumps `version` in `plugins/motir/.claude-plugin/plugin.json` (semantic versioning — a new skill
    is a minor bump, a procedure fix a patch) and merges.
 2. Tag that merge commit `v<version>` and push the tag.
 3. Publish a GitHub release from the tag, listing the skills it carries and what changed.
