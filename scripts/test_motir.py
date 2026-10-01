@@ -14,7 +14,7 @@ import unittest
 RUNNER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "motir")
 SH = shutil.which("sh")
 with open(RUNNER, encoding="utf-8") as _f:
-    PIN = re.search(r'^MOTIR_CLI_VERSION="([^"]+)"', _f.read(), re.M).group(1)
+    CLI_VERSION = re.search(r'^MOTIR_CLI_VERSION="([^"]+)"', _f.read(), re.M).group(1)
 
 
 class RunnerTest(unittest.TestCase):
@@ -65,7 +65,7 @@ class RunnerTest(unittest.TestCase):
         self.assertEqual(done.returncode, 3, done.stderr)
         with open(self.argv_file, encoding="utf-8") as f:
             argv = f.read().split("\n")[:-1]
-        self.assertEqual(argv, ["--yes", f"@motir/cli@{PIN}", "run", "a b", "--flag"])
+        self.assertEqual(argv, ["--yes", f"@motir/cli@{CLI_VERSION}", "run", "a b", "--flag"])
 
 
 if __name__ == "__main__":

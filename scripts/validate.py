@@ -20,6 +20,13 @@
 8. `check_runner` — `scripts/motir` is committed executable (mode 100755) with exactly one `MOTIR_CLI_VERSION=` pin,
    and that version of `@motir/cli` is published on npm. An unreachable registry is reported as such,
    never as an unpublished version.
+9. `check_listing` — `.claude-plugin/plugin.json` names an `icon` that is a square PNG or JPEG inside the plugin,
+   512 to 2048 px on a side and under 2 MB, and sets `privacyPolicyUrl` to an https URL. Claude's plugin
+   directory warns on both, and reads the icon only the first time the plugin is saved or submitted there.
+10. `check_credential_names` — No tracked text file names a shell variable with a credential-shaped word as
+   one of its underscore-separated parts (PWD, PIN, TOKEN, SECRET, KEY, …), as a reference or an
+   assignment. The directory's scanner reads one beside a remote URL as a credential leaving the machine
+   and holds the plugin for review; use the command (`pwd`) or a plainer name instead.
 
 Each item names the `check_*` function that performs it; `main()` calls every one of them once.
 Exits 1 and names every failure. Standard library only.
@@ -40,7 +47,14 @@ MAX_JS_LINE = 2000
 MIN_README_WORDS = 40
 CLI_PACKAGE = "@motir/cli"
 RUNNER = "scripts/motir"
-PIN = re.compile(r'^MOTIR_CLI_VERSION="?([^"\s]*)"?\s*$', re.MULTILINE)
+VERSION_LINE = re.compile(r'^MOTIR_CLI_VERSION="?([^"\s]*)"?\s*$', re.MULTILINE)
+ICON_MIN, ICON_MAX, ICON_MAX_BYTES = 512, 2048, 2 * 1024 * 1024
+# A shell variable whose name has one of these words as an underscore-separated part reads, to Claude's
+# plugin-directory scanner, as a credential taken from the user's machine — `PWD` as a password, `PIN` as
+# a PIN — and one beside a remote URL is held for review. Its own remedy is to remove the read.
+CREDENTIAL_WORDS = {"PWD", "PIN", "PASS", "PASSWD", "PASSWORD", "TOKEN", "SECRET", "KEY", "APIKEY",
+                    "CREDENTIAL", "CREDENTIALS", "AUTH"}
+SHELL_VARIABLE = re.compile(r"\$\{?([A-Za-z_][A-Za-z0-9_]*)|(?:^|[\s;&|(])(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)=")
 
 errors = []
 
@@ -251,7 +265,7 @@ def check_runner():
     ).stdout.split()
     if not staged or staged[0] != "100755":
         fail(f"{RUNNER}: must be committed executable (git mode 100755), is {staged[0] if staged else 'untracked'}")
-    pins = PIN.findall(read_text(path))
+    pins = VERSION_LINE.findall(read_text(path))
     if len(pins) != 1 or not pins[0]:
         fail(f"{RUNNER}: needs exactly one MOTIR_CLI_VERSION=\"<version>\" line, found {len(pins)}")
         return
@@ -264,6 +278,78 @@ def check_runner():
         fail(f"{RUNNER}: could not check MOTIR_CLI_VERSION {pin} — the npm registry is unreachable")
     else:
         fail(f"{RUNNER}: MOTIR_CLI_VERSION {pin} is not a published version of {CLI_PACKAGE}")
+
+
+def image_size(path):
+    """(kind, width, height) of a PNG or JPEG file, or None when it is neither."""
+    with open(path, "rb") as f:
+        data = f.read()
+    if data[:8] == b"\x89PNG\r\n\x1a\n" and data[12:16] == b"IHDR":
+        return "png", int.from_bytes(data[16:20], "big"), int.from_bytes(data[20:24], "big")
+    if data[:2] != b"\xff\xd8":
+        return None
+    i = 2
+    while i + 9 <= len(data) and data[i] == 0xFF:
+        marker = data[i + 1]
+        length = int.from_bytes(data[i + 2:i + 4], "big")
+        if marker in (0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF):
+            return "jpeg", int.from_bytes(data[i + 7:i + 9], "big"), int.from_bytes(data[i + 5:i + 7], "big")
+        i += 2 + length
+    return None
+
+
+def check_listing():
+    try:
+        plugin = read_json(os.path.join(ROOT, ".claude-plugin", "plugin.json"))
+    except (OSError, json.JSONDecodeError):
+        return  # check_manifests already named it
+    where = ".claude-plugin/plugin.json"
+    url = plugin.get("privacyPolicyUrl")
+    if not isinstance(url, str) or not url.startswith("https://"):
+        fail(f"{where}: privacyPolicyUrl must be an https URL — the plugin connects to a remote MCP server")
+    icon = plugin.get("icon")
+    if not isinstance(icon, str) or not icon:
+        fail(f"{where}: icon must name a square PNG or JPEG in the plugin")
+        return
+    path = os.path.realpath(os.path.join(ROOT, icon))
+    if os.path.isabs(icon) or os.path.commonpath([os.path.realpath(ROOT), path]) != os.path.realpath(ROOT):
+        fail(f"{where}: icon {icon!r} is outside the plugin root")
+        return
+    if not os.path.isfile(path):
+        fail(f"{icon}: the icon plugin.json names does not exist")
+        return
+    size = os.path.getsize(path)
+    if size >= ICON_MAX_BYTES:
+        fail(f"{icon}: {size} bytes, must be under {ICON_MAX_BYTES}")
+    shape = image_size(path)
+    if shape is None:
+        fail(f"{icon}: not a PNG or JPEG")
+        return
+    _, width, height = shape
+    if width != height or not ICON_MIN <= width <= ICON_MAX:
+        fail(f"{icon}: {width}x{height}, must be square and {ICON_MIN} to {ICON_MAX} px on a side")
+
+
+def credential_word(name):
+    """The credential-shaped part of a variable name, or None."""
+    for part in name.split("_"):
+        if part in CREDENTIAL_WORDS:
+            return part
+    return None
+
+
+def check_credential_names():
+    for rel in tree_files():
+        try:
+            text = read_text(os.path.join(ROOT, rel))
+        except (UnicodeDecodeError, FileNotFoundError):
+            continue
+        for n, line in enumerate(text.split("\n"), 1):
+            names = dict.fromkeys(m.group(1) or m.group(2) for m in SHELL_VARIABLE.finditer(line))
+            for name in names:
+                word = credential_word(name)
+                if word:
+                    fail(f"{rel}:{n}: variable {name} reads as a credential ({word}) to the plugin directory's scanner")
 
 
 def main(root=None):
@@ -282,6 +368,8 @@ def main(root=None):
     check_mcp_server()
     check_directory_shape()
     check_runner()
+    check_listing()
+    check_credential_names()
     for e in errors:
         print(f"✘ {e}")
     if errors:

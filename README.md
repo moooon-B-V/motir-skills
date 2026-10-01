@@ -121,7 +121,8 @@ checks these hashes against its own `origin/main` and fails when a condensed sec
 
 ```sh
 python3 scripts/validate.py          # skills, SYNC.json, secrets, manifests, the MCP entry,
-                                     # the directory's shape, and the runner's npm pin
+                                     # the directory's shape, the runner's npm pin, the listing's
+                                     # icon and privacy URL, and no credential-named variables
 python3 scripts/test_validate.py     # validate.py's checks, each against a planted defect
 python3 scripts/test_motir.py        # the CLI runner, with stub node / npx
 python3 scripts/test_integration.py  # the seams between them, against npm and Claude Code

@@ -20,7 +20,7 @@ first; you almost certainly do not have it, and then this section ends with **St
 # directory (the checkout itself, or one beside an ancestor).
 [ -z "${MOTIR_META:-}" ] || [ -f "$MOTIR_META/prompts/_shared.md" ] || \
   { echo "MOTIR_META=$MOTIR_META holds no prompts/_shared.md — fix it, do not fall through"; exit 1; }
-META="${MOTIR_META:-}" d="$PWD"
+META="${MOTIR_META:-}" d="$(pwd)"
 while [ -z "$META" ]; do
   for c in "$d" "$d/motir-meta"; do
     [ -z "$META" ] && [ -f "$c/prompts/_shared.md" ] && META="$c"
@@ -33,7 +33,7 @@ done
 if [ -n "$META" ]; then
   echo "RUNBOOK MODE — $META"; cd "$META" && git fetch origin && git rev-parse HEAD origin/main
 else
-  echo "STANDALONE MODE — no runbook at or above $PWD"
+  echo "STANDALONE MODE — no runbook at or above $(pwd)"
 fi
 ```
 

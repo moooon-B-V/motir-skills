@@ -1,14 +1,16 @@
 {
   "name": "motir",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Motir's skills for your coding agent: run the next card end to end, repair a card's red pull requests on their own branches, log a verified bug, clear the Bugs folder one pull request per bug, close a manual card, and be guided through a human card step by step. Installing it also connects the Motir MCP server, which you sign into in the browser the first time it is used, and carries a runner for the pinned `motir` CLI.",
   "author": {
     "name": "moooon B.V.",
     "url": "https://motir.co"
   },
   "homepage": "https://motir.co/docs/mcp",
+  "privacyPolicyUrl": "https://motir.co/legal/privacy",
   "repository": "https://github.com/moooon-B-V/motir-skills",
   "license": "MIT",
+  "icon": ".claude-plugin/icon.png",
   "keywords": [
     "motir",
     "project-management",
