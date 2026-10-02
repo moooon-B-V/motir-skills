@@ -1,14 +1,14 @@
 # Motir
 
 Skills that let your coding agent work a [Motir](https://motir.co) project: take the next card from
-To Do to a linked pull request, repair a card's red pull requests, log a verified bug where it belongs,
+To Do to a linked pull request, repair a card's red pull requests, carry on a card whose run died, log a verified bug where it belongs,
 clear the `Bugs` folder one pull request per bug, be walked through a human card one checked step at a
 time, and close a manual card with a record of who confirmed it.
 
 Installing the plugin brings three things:
 
-- **Six skills**: `motir-run`, `motir-fix`, `motir-log-bug`, `motir-fix-bugs`, `motir-guide` and
-  `motir-mark`. Each one says, in its `SKILL.md`, what to type to use it.
+- **Seven skills**: `motir-run`, `motir-fix`, `motir-continue`, `motir-log-bug`, `motir-fix-bugs`,
+  `motir-guide` and `motir-mark`. Each one says, in its `SKILL.md`, what to type to use it.
 - **The `motir` MCP server** at `https://app.motir.co/api/mcp`. Claude Code signs into it in the
   browser the first time it is used — run `/mcp`, pick `motir`, choose **Authenticate** — and on
   Motir's consent screen you pick the workspace and approve. There is no token to create or paste.

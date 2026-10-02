@@ -1,6 +1,6 @@
 #!/bin/sh
 # The story's install transcript: a clean Claude Code adds this checkout as a marketplace, installs
-# motir@motir-skills, and the installed plugin carries the six skills, the `motir` MCP server and a
+# motir@motir-skills, and the installed plugin carries the seven skills, the `motir` MCP server and a
 # runner that prints the pinned CLI version. Every command, its output and its exit code go to the
 # transcript; the first assertion that misses fails the run.
 #
@@ -14,7 +14,7 @@ set -u
 CLAUDE_CODE="@anthropic-ai/claude-code@2.1.283"
 CHECKOUT=$(cd "${1:-$(dirname "$0")/..}" && pwd)
 TRANSCRIPT=${TRANSCRIPT:-$(pwd)/install-transcript.txt}
-SKILLS="motir-fix motir-fix-bugs motir-guide motir-log-bug motir-mark motir-run"
+SKILLS="motir-continue motir-fix motir-fix-bugs motir-guide motir-log-bug motir-mark motir-run"
 MCP_URL="https://app.motir.co/api/mcp"
 PLUGIN="$CHECKOUT/plugins/motir"
 CLI_VERSION=$(sed -n 's/^MOTIR_CLI_VERSION="\(.*\)"$/\1/p' "$PLUGIN/scripts/motir")
@@ -105,10 +105,10 @@ pass "installed $VERSION, enabled, motir MCP server at $MCP_URL"
 step "Component inventory" claude plugin details motir@motir-skills
 [ "$code" -eq 0 ] || miss "plugin details exited $code"
 for skill in $SKILLS; do
-  grep -E "^ *Skills \(6\)" "$OUT" | grep -qw -- "$skill" || miss "plugin details does not list skill $skill among six"
+  grep -E "^ *Skills \(7\)" "$OUT" | grep -qw -- "$skill" || miss "plugin details does not list skill $skill among seven"
 done
 grep -qE "^ *MCP servers \(1\) +motir( |$)" "$OUT" || miss "plugin details does not list the one MCP server motir"
-pass "inventory: the six skills and the motir MCP server"
+pass "inventory: the seven skills and the motir MCP server"
 
 log "== No executable directory in the installed copy"
 log "\$ test ! -e $INSTALL_PATH/bin"
