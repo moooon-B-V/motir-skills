@@ -1,0 +1,52 @@
+[
+  {
+    "corpusPath": "prompts/continue.md",
+    "heading": "WHAT IT IS FOR — a card whose run DIED",
+    "sha256": "6b0a728b29fd645714fde966d5454bf1a8cdc54db30216f9925233957f2d2993"
+  },
+  {
+    "corpusPath": "prompts/continue.md",
+    "heading": "THE CLAIM — `claim_work_item_continue`, and one sentence per outcome",
+    "sha256": "6dba5e71b7405769108089ac8412a0152d1487e2f55fa549f933d08f9d28cd7e"
+  },
+  {
+    "corpusPath": "prompts/continue.md",
+    "heading": "THE CHECKOUT — each repository's branch the claim names, never a new one",
+    "sha256": "ee314b470f330bcb03ae849522bf44b15a6f0f526e05967c7ffed0693f7bc465"
+  },
+  {
+    "corpusPath": "prompts/continue.md",
+    "heading": "THE PROMPT — `dispatch_prompt { key, continueFrom }`, and do what it says",
+    "sha256": "3b184585c57b5ec1c8ff1e7142b8999aee9567164a1a2e82d7cbe97ebbad100f"
+  },
+  {
+    "corpusPath": "prompts/continue.md",
+    "heading": "LIVENESS — `touch_work_item_continue` at least every two minutes",
+    "sha256": "606899024eb04ccb0929d5a9a9da47c27d0efb09084e2b55d25a3a9f9745f83c"
+  },
+  {
+    "corpusPath": "prompts/continue.md",
+    "heading": "DELIVERY — `run.md`'s, unchanged, plus WHO PUBLISHES the acceptance receipt",
+    "sha256": "2f77b438d9e2df0f9208e78ea5f9da695d4fc28d03a7a6a8ddf30c84d07de4e4"
+  },
+  {
+    "corpusPath": "prompts/continue.md",
+    "heading": "A PARENT CONTINUE — `mode: parent`",
+    "sha256": "187958e5576e95319cd8e4acb97425a7831d44485fe4a9b7a8ef2c72dc9a7907"
+  },
+  {
+    "corpusPath": "prompts/continue.md",
+    "heading": "THE CLOSE — `close_work_item_continue` on EVERY exit path",
+    "sha256": "a3f38b8f6b1cfbe1d74756daafa810617c3d5ac6e3e3e5e0e08843b2a5fffba8"
+  },
+  {
+    "corpusPath": "prompts/continue.md",
+    "heading": "THE REPORT — what a reader acts on",
+    "sha256": "825bdbdbd743fe53857e958685a9af3411e6e2f5932f5f70bb4f3f0709e2ef0b"
+  },
+  {
+    "corpusPath": "prompts/continue.md",
+    "heading": "WHAT THIS PROTOCOL NEVER DOES",
+    "sha256": "e6f349c91f48b4a1754ee99e2eab225b76c0846a96ba1cfa1a5305363ad7ce2d"
+  }
+]

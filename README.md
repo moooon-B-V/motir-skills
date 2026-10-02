@@ -21,7 +21,7 @@ then `/plugin marketplace add ./motir-skills` and the same `/plugin install`.
 
 One install brings three things:
 
-- **The six skills** in the table below.
+- **The seven skills** in the table below.
 - **The `motir` MCP server** at `https://app.motir.co/api/mcp`. Claude Code signs into it in the
   browser the first time it is used — run `/mcp`, pick `motir`, choose **Authenticate** — and on
   Motir's consent screen you pick the workspace and approve. There is no token to create or paste.
@@ -62,6 +62,7 @@ Nothing else: no other credential, and no access to anything but your own projec
 | [`motir-run`](plugins/motir/skills/motir-run/SKILL.md) | `motir run` · `motir run <key>` · `motir next` | Closes out merged work, claims the card, builds it on its own branch, opens ONE pull request linked to the card, moves it to Implemented and publishes How to test. A card that cannot be built as written is handed to Motir's planner with the correction, not built. |
 | [`motir-log-bug`](plugins/motir/skills/motir-log-bug/SKILL.md) | `motir log bug <what is wrong>` | Root-causes the defect first, looks for the card someone already filed, then files ONE bug — under the story it blocks, or in the project's `Bugs` folder — linked to the card it was found on. |
 | [`motir-fix`](plugins/motir/skills/motir-fix/SKILL.md) | `motir fix <KEY>` | Repairs ONE card's red pull requests after the run that opened them has ended — failing checks, a merge-queue ejection, or an acceptance video sent back with Re-run. Claims the repair so nobody pushes over it, fixes on each pull request's OWN branch (never a new one), up to five attempts, re-records the acceptance video once CI is green and gets it re-published — by CI where the repository's lane publishes, over MCP otherwise — and closes the repair with how it ended. Never moves the card's status or merges. Not `motir fix bugs` — that is `motir-fix-bugs`, the row below. |
+| [`motir-continue`](plugins/motir/skills/motir-continue/SKILL.md) | `motir continue <KEY>` | Carries on ONE card whose run DIED — a laptop closed, a sandbox lost, a process killed — on the branch that run left. Claims the continue so nobody else works the same branch, checks out the dead run's OWN branch in every repository the card spans (never a new one, never resetting a worktree), reads the CONTINUE prompt, keeps the continue alive, and delivers exactly as `motir-run` does: one pull request per repository, Implemented, How to test, and the acceptance receipt published by CI where the repository's lane does it, over MCP otherwise. Not a card whose pull request is open — that is `motir-fix`. |
 | [`motir-fix-bugs`](plugins/motir/skills/motir-fix-bugs/SKILL.md) | `motir fix bugs` · `motir fix bugs <limit>` | Works through the project's `Bugs` folder one bug at a time, oldest first. Each bug gets exactly one outcome: ONE pull request fixing only that bug, a `blocked_by` edge to the card it genuinely waits on, or a comment with the evidence when it is already fixed, cannot be reproduced or needs a person. Ends by itself and reports every bug. |
 | [`motir-guide`](plugins/motir/skills/motir-guide/SKILL.md) | `motir guide <key>` · `motir guide` | Walks you through a human card — `executor: human`, whatever its type — one step at a time: claims it, gives ONE step with its notes and the command to copy, checks what it can with read-only means (`dig`, a URL, a CLI `status`) before ticking the step on the card, resumes where an interrupted walk stopped, and closes the card to Done (or leaves it to its pull request's merge) with a summary of what was done and checked. A card with no steps gets proposed steps, written to the card only with your OK. |
 | [`motir-mark`](plugins/motir/skills/motir-mark/SKILL.md) | `motir mark <key> done` | Closes a card no pull request can close (a manual card: an account, a secret, a setting), walking its status to Done with a comment. A card that has a pull request is closed by its merge, and the skill says so instead. |
@@ -84,7 +85,7 @@ Each skill is ONE copy with TWO modes, and every new skill follows the same shap
 plugins/motir/                    THE PLUGIN — exactly what Claude Code installs
   .claude-plugin/plugin.json        its manifest (version, skills, the `motir` MCP server, listing fields)
   .claude-plugin/icon.png           the listing icon
-  skills/<name>/SKILL.md, SYNC.json the six skills
+  skills/<name>/SKILL.md, SYNC.json the seven skills
   scripts/motir                     the pinned CLI runner
   README.md, LICENSE
 scripts/                          this repository's tooling: the validator, its tests, the install transcript
