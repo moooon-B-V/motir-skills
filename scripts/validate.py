@@ -36,6 +36,11 @@ runs. The repository root holds the marketplace manifest and this tooling, which
 11. `check_bundle` — The plugin folder holds only what a user runs: its manifest, the icon it names, the
    skills (`SKILL.md` and `SYNC.json` each), the runner, `README.md` and `LICENSE`. Anything else — a
    test, a CI script — is scanned by the directory as part of the plugin, and has held it for review.
+   The one other file it may hold is `hooks/hooks.json`, which `check_hooks` reads.
+12. `check_hooks` — The plugin's `hooks/hooks.json`, when present, is a JSON object whose `hooks` maps
+   Claude Code events to matcher groups of `mcp_tool` hooks, and every one of them calls a tool on THIS
+   plugin's own MCP server by its scoped name, `plugin:<plugin name>:<server key>` — the bare key names
+   no server once the plugin is installed, and the hook would fail on every tool use (Story MOTIR-7446).
 
 Each item names the `check_*` function that performs it; `main()` calls every one of them once.
 Exits 1 and names every failure. Standard library only.
@@ -58,6 +63,10 @@ CLI_PACKAGE = "@motir/cli"
 PLUGIN = "plugins/motir"
 MARKETPLACE_SOURCE = "./" + PLUGIN
 RUNNER = "scripts/motir"
+HOOKS = "hooks/hooks.json"
+HOOK_EVENTS = {"PreToolUse", "PostToolUse", "PostToolUseFailure", "UserPromptSubmit", "Notification",
+               "Stop", "SubagentStop", "SubagentStart", "PreCompact", "SessionStart", "SessionEnd",
+               "PermissionRequest"}
 VERSION_LINE = re.compile(r'^MOTIR_CLI_VERSION="?([^"\s]*)"?\s*$', re.MULTILINE)
 ICON_MIN, ICON_MAX, ICON_MAX_BYTES = 512, 2048, 2 * 1024 * 1024
 # A shell variable whose name has one of these words as an underscore-separated part reads, to Claude's
@@ -390,13 +399,48 @@ def check_credential_names():
 
 def check_bundle():
     plugin = read_plugin() or {}
-    allowed = {".claude-plugin/plugin.json", RUNNER, "README.md", "LICENSE"}
+    allowed = {".claude-plugin/plugin.json", RUNNER, "README.md", "LICENSE", HOOKS}
     if isinstance(plugin.get("icon"), str):
         allowed.add(os.path.normpath(plugin["icon"]))
     for rel in plugin_files():
         if rel not in allowed and not SKILL_FILE.match(rel):
             fail(f"{PLUGIN}/{rel}: does not belong in the plugin — only the manifest, its icon, the skills,"
-                 " the runner, README.md and LICENSE ship")
+                 " the runner, its hooks, README.md and LICENSE ship")
+
+
+def check_hooks():
+    path = plugin_path(HOOKS)
+    if not os.path.isfile(path):
+        return
+    where = f"{PLUGIN}/{HOOKS}"
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except ValueError as err:
+        fail(f"{where}: not valid JSON ({err})")
+        return
+    plugin = read_plugin() or {}
+    servers = {f"plugin:{plugin.get('name')}:{key}" for key in (plugin.get("mcpServers") or {})}
+    events = data.get("hooks") if isinstance(data, dict) else None
+    if not isinstance(events, dict) or not events:
+        fail(f"{where}: must be an object whose `hooks` maps events to matcher groups")
+        return
+    for event, groups in events.items():
+        if event not in HOOK_EVENTS:
+            fail(f"{where}: {event!r} is not a Claude Code hook event")
+        for group in groups if isinstance(groups, list) else [None]:
+            hooks = group.get("hooks") if isinstance(group, dict) else None
+            if not isinstance(hooks, list) or not hooks:
+                fail(f"{where}: {event} needs matcher groups, each with a non-empty `hooks` list")
+                continue
+            for hook in hooks:
+                if not isinstance(hook, dict) or hook.get("type") != "mcp_tool":
+                    fail(f"{where}: {event} hook must be of type mcp_tool")
+                elif hook.get("server") not in servers:
+                    fail(f"{where}: {event} hook server {hook.get('server')!r} is not this plugin's MCP server"
+                         f" — use one of {sorted(servers)}")
+                elif not isinstance(hook.get("tool"), str) or not hook["tool"]:
+                    fail(f"{where}: {event} hook names no tool")
 
 
 def main(root=None):
@@ -418,6 +462,7 @@ def main(root=None):
     check_listing()
     check_credential_names()
     check_bundle()
+    check_hooks()
     for e in errors:
         print(f"✘ {e}")
     if errors:
