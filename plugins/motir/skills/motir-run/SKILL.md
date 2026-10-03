@@ -1,6 +1,6 @@
 ---
 name: motir-run
-description: Run Motir work end to end — `motir next`, `motir run`, `motir run <key>`, or `motir run <parent-key>` for a story whose children are all leaves. Use when the user asks to run, execute, build, work or pick up the next ready Motir card. It closes out merged work, claims the card, builds it on its own branch, opens ONE pull request linked to the card, moves the card to Implemented and publishes How to test. A card that is wrong goes to Motir's planner instead of being built; a defect outside the card goes to motir-log-bug.
+description: Run Motir work end to end — `motir next`, `motir run`, `motir run <key>`, or `motir run <parent-key>` for a story whose children are all leaves. Use when the user asks to run, execute, build, work or pick up the next ready Motir card. It closes out merged work, claims the card, records its run in Motir (harness, model, each step, how it ended), builds it on its own branch, opens ONE pull request linked to the card, moves the card to Implemented and publishes How to test. A card that is wrong goes to Motir's planner instead of being built; a defect outside the card goes to motir-log-bug.
 ---
 
 # `motir run` / `motir next` — work one card, end to end
@@ -58,7 +58,8 @@ A defect out of the card's scope goes through `motir-log-bug`.
 
 ## Standalone mode
 
-> Condenses `prompts/run.md` § *The CLOSE-OUT SWEEP*, § *A RUN ASSIGNS THE CARD*, § *Worktree rules*,
+> Condenses `prompts/run.md` § *The CLOSE-OUT SWEEP*, § *A RUN ASSIGNS THE CARD*, § *A RUNBOOK RUN PUTS
+> ITSELF ON THE RUN RECORD*, § *Worktree rules*,
 > § *PR titles drive the status sync*, § *Design-reference rule*, § *YOUR CI WENT RED*, § *The how-to-test
 > rule*, § *A RECORDED DEVIATION … is a `bug` to FILE*, § *WHEN THE `motir-plan` SKILL IS NOT
 > AVAILABLE*, § *`motir run`* and § *`motir run <parent>`*, and `prompts/_shared.md` § *Status tracks
@@ -81,6 +82,7 @@ not a question.
 | Moment | Status | Who writes it |
 |---|---|---|
 | The card is claimed | **In Progress** | `claim_work_item` (this run) |
+| The run is opened, reported and closed | (no status) | `start_work_item_run` · `report_action` · `close_work_item_run` (this run) |
 | The pull request is open and linked | **Implemented** | `transition_status` (this run) |
 | CI on that pull request is green | **In Review** | Motir, from the CI result — **never this run** |
 | The pull request merges | **Done** | Motir's status sync, because the pull request is LINKED |
@@ -125,8 +127,15 @@ Before picking anything up, look at the branches and worktrees earlier runs left
   step. Do **not** also call `transition_status`. The answer is a result, not an error:
   `claimed` ⇒ yours · `mine` ⇒ you are resuming your own run · `taken` ⇒ someone else holds it, stop and
   name them · `not_claimable` ⇒ it is past To Do (or archived), stop.
+- **On `claimed` or `mine`, open the run — `start_work_item_run { key, harness, model }`** — so the run
+  shows in Motir's Runs page and on the card, like a run started from the Motir CLI. `harness` is your
+  own name as your makers write it (`Claude Code`, `Codex`, …). `model` is the model id you run as —
+  **omit it when you do not know it; never guess one**, because a delivered run records it as who built
+  the card. Keep the `runId` it answers: the close needs it. `mine` answers the run you already have
+  open on this card; carry on with it. (`motir next` only prints a prompt and opens no run.)
 - **The worktree is the real claim.** `git worktree list` and look for a branch or directory already
-  carrying the key. Uncommitted changes ⇒ a live session owns it: stop and report. Commits or an open
+  carrying the key. Uncommitted changes ⇒ a live session owns it: close your run `halted` (below) and
+  report. Commits or an open
   pull request ⇒ someone has landed part of it: read the card's comments before assuming what is left.
   **Never reset, clean, stash or check out over a worktree you did not dirty.**
 
@@ -144,6 +153,38 @@ Before picking anything up, look at the branches and worktrees earlier runs left
 - The target repository's `CLAUDE.md` / `AGENTS.md` / contributing guide are its rules for the code.
 - **`motir next` stops here**: print the prompt for the user to hand to their own agent, say the card
   is claimed and In Progress, and stop. `motir run` carries on.
+
+### Report every step, and close the run on every exit
+
+- **Before each step you take, `report_action { key, action }`** — the step in one line: *"read the
+  export service"*, *"run the changed tests"*, *"open the pull request"*. At most 500 characters, and
+  **never a transcript, a diff, file contents, a prompt or a secret**: it is stored and shown to
+  everyone who can read the run.
+- **Add `events` at the milestones**, on the card's key. The `disposition` is what moves the card on the
+  run; without it the card reads *Not reached* once the run closes.
+
+  | when | `events` entry |
+  |---|---|
+  | the worktree exists | `{ kind: "checkout_ready", sessionBranch: "<branch>", disposition: "running" }` |
+  | the pull request is linked | `{ kind: "delivery_linked", data: { url: "<pull request url>" } }` |
+  | the card reached Implemented | `{ kind: "card_settled", disposition: "implemented" }` |
+  | the card was parked or the run stopped on it | `{ kind: "card_settled", disposition: "failed" }` |
+
+- **Staying alive needs nothing extra.** Every Motir tool call keeps your run alive; a run Motir has not
+  heard from for an hour is closed for you. (In Claude Code the `motir` plugin also heartbeats it after
+  every tool use.)
+- **`close_work_item_run { key, runId, outcome }` on EVERY exit**, on the key you opened it on:
+
+  | how the run ends | `outcome` |
+  |---|---|
+  | the card is Implemented and its pull request linked (step 6), or a parent's pull request is ready (step 9) | `completed` |
+  | a parent run ran out of ready children before its last one | `drained` |
+  | the card is wrong and its correction is submitted (step 8) | `replanned` |
+  | a stop you could not get past — a refusal, a live worktree, a failed call | `halted` |
+  | the person stopped you | `interrupted` |
+
+  A `completed` or `drained` close records your harness and model as the card's implementer; nothing
+  else does. The close changes no card's status.
 
 ### 5. Build — its own worktree, one repository, ONE pull request
 
@@ -177,6 +218,9 @@ git worktree add ../<repo>-<KEY> -b <KEY>-<short-slug> origin/<default-branch>
    command in its own fenced block), and, when the card changes something a person can see, the
    click-path with what they should see. No rendered surface ⇒ say why there is no click-path.
 4. **`transition_status { key, status: "implemented" }`.** Never `in_review` — CI writes that.
+5. **Close the run:** `report_action` with the `delivery_linked` and `card_settled` (`implemented`)
+   events, then **`close_work_item_run { key, runId, outcome: "completed" }`** — the close that records
+   who built the card.
 
 Then **stop**: do not merge, do not delete the branch or worktree. The next run's step 1 tears it down
 after the merge.
@@ -226,8 +270,8 @@ planner, in this order, each step once:
 4. **`get_plan_status { planId }`** a few times, until it leaves `generating` or reports FAILED. Still
    generating when you stop is a fine answer — report it. Approval is a person's, in Motir; never yours.
 5. **`add_comment` on the card** — the step-2 paragraph, the `planId`, and the status you last read.
-6. **Stop and report**: the card parked at Planning, the `planId`, its status, and that a plan waits
-   for review. Build nothing.
+6. **Close the run `replanned`** (`close_work_item_run`), then **stop and report**: the card parked at
+   Planning, the `planId`, its status, and that a plan waits for review. Build nothing.
 
 **A refusal is a stop, too** — and the thread is kept, so a person can submit it later:
 
@@ -239,13 +283,18 @@ planner, in this order, each step once:
 | `RATE_LIMITED` | the shared planning budget is spent | stop; do not wait it out |
 
 Every refusal ends the same way: the card stays at Planning, an `add_comment` carries the whole
-correction — the paragraph and all six fields — plus the refusal code, and you report that you
-stopped and why. Never write the plan or the missing cards yourself as a fallback.
+correction — the paragraph and all six fields — plus the refusal code, the run closes `halted`, and you
+report that you stopped and why. Never write the plan or the missing cards yourself as a fallback.
 
 ### 9. A parent run — a story whose children are all leaves
 
 - **Claim the parent** (`claim_work_item`), then check `validate_work_item { key }`: a child waiting
   on a card **outside** the story is skipped and named, with everything that waits on it.
+- **ONE run, on the PARENT's key.** `start_work_item_run` on a parent needs you to hold every child that
+  is not Done, so `claim_work_item` each of them first, then open the run with the parent's key. A
+  `not_claimed` answer names the child you do not hold (`offenderKey`): claim it, then open again.
+  `report_action` names the CHILD you are working as its `key`, with `checkout_ready` as you start a
+  child and `card_settled` (`implemented`) as its commit lands.
 - **One branch per repository the children ship in**, named for the parent —
   `git worktree add ../<repo>-<PARENT-KEY> -b <PARENT-KEY>-<slug> origin/<default-branch>`. **Re-running
   resumes:** reuse the branch, merge the default branch into it, and skip every child already committed.
@@ -263,12 +312,13 @@ stopped and why. Never write the plan or the missing cards yourself as a fallbac
 - **At the LAST child in a repository**: read the parent's children again (`get_work_item`) — any child
   not yet Implemented, including one filed during this run, is run, moved out of the story, or reported
   and the draft left as it is. Then `publish_test_instructions` on the **PARENT**, rewrite the pull
-  request body to list every child commit, mark it ready (`gh pr ready`), and `transition_status` the
-  parent → `implemented`.
+  request body to list every child commit, mark it ready (`gh pr ready`), `transition_status` the
+  parent → `implemented`, and close the run `completed`.
 - **Stopped before the last child?** Leave the pull request a draft and the parent In Progress, publish
-  no How to test, and say so in the report.
+  no How to test, close the run — `drained` when no child was left ready, `halted` when something
+  stopped you — and say so in the report.
 
 ### 10. Report
 
 What was built, the pull request (and whether it is a draft or ready), the card's status as you read it
-back, any bug you filed, any card you parked at Planning with its `planId`, and what is ready next.
+back, how the run closed, any bug you filed, any card you parked at Planning with its `planId`, and what is ready next.

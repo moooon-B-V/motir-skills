@@ -1,0 +1,31 @@
+{
+  "description": "Keep a Motir run alive: after every tool use, tell the Motir MCP server this session is still working (report_action with no arguments). Every Motir tool call already does this; the hook covers long stretches of local work with none.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "mcp_tool",
+            "server": "plugin:motir:motir",
+            "tool": "report_action",
+            "input": {}
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "mcp_tool",
+            "server": "plugin:motir:motir",
+            "tool": "report_action",
+            "input": {}
+          }
+        ]
+      }
+    ]
+  }
+}

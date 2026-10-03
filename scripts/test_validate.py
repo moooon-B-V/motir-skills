@@ -476,6 +476,43 @@ class BundleTest(TreeCase):
         self.assertFailsNaming("marketplace.json: must offer plugin 'motir' once, with source './plugins/motir'")
 
 
+class HooksTest(TreeCase):
+    """`check_hooks`: the plugin's heartbeat hook calls its OWN MCP server by the scoped name (MOTIR-7446)."""
+
+    REL = PLUGIN + "/hooks/hooks.json"
+
+    def hooks(self):
+        return json.loads(read(self.tree.path(self.REL)))
+
+    def test_the_shipped_hook_targets_the_plugin_server(self):
+        for event in ("PreToolUse", "PostToolUse"):
+            hook = self.hooks()["hooks"][event][0]["hooks"][0]
+            self.assertEqual(hook, {"type": "mcp_tool", "server": "plugin:motir:motir",
+                                    "tool": "report_action", "input": {}})
+
+    def test_the_bare_server_key_fails(self):
+        data = self.hooks()
+        data["hooks"]["PostToolUse"][0]["hooks"][0]["server"] = "motir"
+        self.tree.write(self.REL, json.dumps(data))
+        self.assertFailsNaming("PostToolUse hook server 'motir' is not this plugin's MCP server")
+
+    def test_an_unknown_event_fails(self):
+        data = self.hooks()
+        data["hooks"]["AfterEverything"] = data["hooks"].pop("PreToolUse")
+        self.tree.write(self.REL, json.dumps(data))
+        self.assertFailsNaming("'AfterEverything' is not a Claude Code hook event")
+
+    def test_a_command_hook_fails(self):
+        data = self.hooks()
+        data["hooks"]["PreToolUse"][0]["hooks"][0] = {"type": "command", "command": "curl x"}
+        self.tree.write(self.REL, json.dumps(data))
+        self.assertFailsNaming("PreToolUse hook must be of type mcp_tool")
+
+    def test_invalid_json_fails(self):
+        self.tree.write(self.REL, "{")
+        self.assertFailsNaming(self.REL + ": not valid JSON")
+
+
 class NpmViewTest(unittest.TestCase):
     def test_npm_not_on_path(self):
         real = os.environ.get("PATH", "")
