@@ -196,6 +196,13 @@ git worktree add ../<repo>-<KEY> -b <KEY>-<short-slug> origin/<default-branch>
 - **One card = one repository = one branch = one pull request.** A card whose acceptance criteria
   genuinely need changes in two repositories it does not name is a wrong card (step 8), not a choice
   you make.
+- **A `type: decision` card is the one exception: it ships a PAGE, not a branch.** Write ONE page in the
+  card's project (`create_page` / `update_page`), and when it is complete call
+  **`publish_decision_page { key, pageId }` once**. That seals the version and raises the card's
+  `decision_approval` gate about exactly it. No worktree, no commit, no pull request, no link, and no
+  status write: a person's Approve freezes the version and moves the card to Done. Do not edit the page
+  after publishing (an edit is a new version, and a second publish replaces the question). Report it as
+  **published and awaiting approval**, with the page id and version.
 - Do all the work in that worktree. Stage specific paths (`git add <path>`, never `-A`).
 - Run the repository's checks — lint, type-check, build — and **only the tests you added or changed**.
   The pull request's CI runs the whole suite; a full local run is a slower copy of a measurement that is
@@ -302,6 +309,8 @@ report that you stopped and why. Never write the plan or the missing cards yours
   its `dispatch_prompt`, build it in the parent's worktree, run the checks, and land **ONE commit** whose
   message names the child's key and title. Then `transition_status` the child → `implemented`. No pull
   request per child.
+- **A `decision` child gets no commit either**: it publishes its page as step 5 says, and its
+  dependents wait until a person approves it.
 - **At the FIRST commit in a repository**, push and open that repository's pull request **as a DRAFT**
   (`gh pr create --draft`), its title carrying the PARENT's key, and **`link_pull_request` it to the
   PARENT** in the same step. A draft cannot merge — which matters, because merging a parent's pull
