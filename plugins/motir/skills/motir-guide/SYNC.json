@@ -12,12 +12,12 @@
   {
     "corpusPath": "prompts/guide.md",
     "heading": "TAKE THE STEPS — the card's list, or DERIVED steps written back with the person's OK",
-    "sha256": "d377f9fd70acdda5e1d8f71d251901539336457533465793f2027662a3790839"
+    "sha256": "e1cf4380b7bd14d10b12f1e65d148975d53897d1dba8b294bd7c069477e0a224"
   },
   {
     "corpusPath": "prompts/guide.md",
     "heading": "ONE STEP AT A TIME",
-    "sha256": "d938ac4088c1924ecfeb9b6761e93db7e93eb3bb89b320cf3ea6a49d283113ec"
+    "sha256": "6165a9fcad1146d3c69317c203a348aa8a022814184e2b1bc22bb72cf018e3b6"
   },
   {
     "corpusPath": "prompts/guide.md",
@@ -31,22 +31,27 @@
   },
   {
     "corpusPath": "prompts/guide.md",
+    "heading": "CORRECT THE CARD — on the person's yes, while its target stands",
+    "sha256": "5ba8cfb1158f8d07dd18721e8ef16c640ec40d5fbe85e2f1ca5970f4aef3b5e9"
+  },
+  {
+    "corpusPath": "prompts/guide.md",
     "heading": "STOP ANYWHERE — the walk is resumable because the card holds its state",
     "sha256": "b044dc27994147d9cc02fb290065bc2569c54e9bf84a928013d0b570322efe88"
   },
   {
     "corpusPath": "prompts/guide.md",
     "heading": "A STEP THAT CANNOT BE DONE AS WRITTEN — record it and stop, never improvise the plan",
-    "sha256": "4e4bcc53c014b6c64508e873b7e4bc7a6f3632e4911129ef8065456929b525f2"
+    "sha256": "18cf47490efa922b3492a9a9454f83a90651cfa408a2d70b9c2be53b4737c055"
   },
   {
     "corpusPath": "prompts/guide.md",
     "heading": "CLOSE — Done, with a summary of what was done and what was checked",
-    "sha256": "761a7970a1192c62e066ffd516e66833fddd14f240708e6e29400131cee5b43b"
+    "sha256": "9b3a4af6a7e1c65f1421a7b73e5737348c7499d9c53495064312fc33cbe80b5c"
   },
   {
     "corpusPath": "prompts/guide.md",
     "heading": "WHAT THIS PROTOCOL NEVER DOES",
-    "sha256": "12649fb897de649af0d226168b61b3091fa75e2a8677d0effeb3af65cd2c4275"
+    "sha256": "9f9af3bb440bda34a1fde2090dd72380e924305bd5fc3ccca49474f6bfc1ac59"
   }
 ]
