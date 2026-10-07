@@ -83,6 +83,10 @@ The tools:
 to you. A continue **silent for five minutes is dead** — the card reads *run died* again and someone
 else may claim it — which is why step 5 exists.
 
+**A run that closed `gated` is continued too**, once a gate that held it is approved, chosen, confirmed
+or marked done: it reads *Ready to resume* on the Workbench's **To resume**, and the claim takes it on
+that run's own branch. While every holding gate still awaits, there is nothing to resume yet.
+
 ### 1. Claim the continue — and refuse in words
 
 `claim_work_item_continue { key }`, before any checkout. Keep `runId` and `deadRun.id`. A refusal
@@ -211,7 +215,7 @@ each, as the `motir-run` skill's parent run does. Keep touching (step 5) through
 | a parent continue stopped at a card limit the person set | `max` |
 | a checkout stop, an invalid `continueFrom`, a step you could not get past, an error | `halted` |
 | the card turned out wrong and went to Motir's planner | `replanned` |
-| it stopped at an approval gate (a design or decision awaiting its press) | `gated` |
+| it stopped at an approval gate again (a design, decision, choice or manual card awaiting its press) — never `halted` | `gated` |
 | the person stopped you, or the session is ending first | `interrupted` |
 | you are giving the work up for somebody to start over | `abandoned` |
 

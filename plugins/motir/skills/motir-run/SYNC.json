@@ -17,7 +17,7 @@
   {
     "corpusPath": "prompts/run.md",
     "heading": "A RUNBOOK RUN PUTS ITSELF ON THE RUN RECORD — open after the claim, report before every step, close on every exit",
-    "sha256": "fb27a563988ad5df9f5e8593c8412f63476a36940c3324f8a5f8b375e0ec99a7"
+    "sha256": "49c3bee64eb8ba0c0a6557cc8442330d0e45328f397c7b2293f53275f0519269"
   },
   {
     "corpusPath": "prompts/run.md",
@@ -57,7 +57,7 @@
   {
     "corpusPath": "prompts/run.md",
     "heading": "`motir run <parent>` — run a container ONE LAYER above leaves (one commit per child)",
-    "sha256": "be3bf41d21ae9aa1a3235d764c078054edf2c902fa7acc62d48f205d55ce4ccd"
+    "sha256": "9e6159c3fd4da5ed37210621bb2b52dcef7d9d0db06d404441ad8b1cf4a125a4"
   },
   {
     "corpusPath": "prompts/_shared.md",

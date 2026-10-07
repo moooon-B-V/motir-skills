@@ -2,7 +2,7 @@
   {
     "corpusPath": "prompts/continue.md",
     "heading": "WHAT IT IS FOR — a card whose run DIED",
-    "sha256": "6b0a728b29fd645714fde966d5454bf1a8cdc54db30216f9925233957f2d2993"
+    "sha256": "8547e04250baf7e696b9c07a70781cba4795e2a6b556de1af54e0463b990a842"
   },
   {
     "corpusPath": "prompts/continue.md",
@@ -37,7 +37,7 @@
   {
     "corpusPath": "prompts/continue.md",
     "heading": "THE CLOSE — `close_work_item_continue` on EVERY exit path",
-    "sha256": "a3f38b8f6b1cfbe1d74756daafa810617c3d5ac6e3e3e5e0e08843b2a5fffba8"
+    "sha256": "2fc3ac23a8d252bb83ab6a23c9c89adfe568c61e7dc6aa8e200331a06cfb0ee3"
   },
   {
     "corpusPath": "prompts/continue.md",

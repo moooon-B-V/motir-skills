@@ -180,11 +180,16 @@ Before picking anything up, look at the branches and worktrees earlier runs left
   | the card is Implemented and its pull request linked (step 6), or a parent's pull request is ready (step 9) | `completed` |
   | a parent run ran out of ready children before its last one | `drained` |
   | the card is wrong and its correction is submitted (step 8) | `replanned` |
-  | a stop you could not get past — a refusal, a live worktree, a failed call | `halted` |
+  | the remaining children wait on an approval gate (a design, decision, choice or manual card not yet approved) | `gated` |
+  | a stop you could not get past for any other reason — a refusal, a live worktree, a failed call | `halted` |
   | the person stopped you | `interrupted` |
 
   A `completed` or `drained` close records your harness and model as the card's implementer; nothing
   else does. The close changes no card's status.
+
+  **A stop at an awaiting gate is `gated`, never `halted`.** `halted` reads as *Run died*; `gated` reads
+  *Stopped at a gate*. Motir records which gates held the run and lists it on the Workbench's **To resume**;
+  once a gate is approved, `motir continue <KEY>` resumes it on the same branch.
 
 ### 5. Build — its own worktree, one repository, ONE pull request
 
@@ -324,8 +329,10 @@ report that you stopped and why. Never write the plan or the missing cards yours
   request body to list every child commit, mark it ready (`gh pr ready`), `transition_status` the
   parent → `implemented`, and close the run `completed`.
 - **Stopped before the last child?** Leave the pull request a draft and the parent In Progress, publish
-  no How to test, close the run — `drained` when no child was left ready, `halted` when something
-  stopped you — and say so in the report.
+  no How to test, close the run — `gated` when only awaiting approval gates stopped it, `drained` when
+  no child was left ready for another reason, `halted` when something else stopped you — and say so in
+  the report. A `gated` run waits on **To resume**; after the gate is approved, `motir continue <PARENT>`
+  picks it up on the same branch.
 
 ### 10. Report
 
