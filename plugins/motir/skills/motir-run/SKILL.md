@@ -169,6 +169,7 @@ Before picking anything up, look at the branches and worktrees earlier runs left
   | the pull request is linked | `{ kind: "delivery_linked", data: { url: "<pull request url>" } }` |
   | the card reached Implemented | `{ kind: "card_settled", disposition: "implemented" }` |
   | the card was parked or the run stopped on it | `{ kind: "card_settled", disposition: "failed" }` |
+  | a parent's child is `manual` / executor `human` — a person must do it | `{ kind: "card_settled", disposition: "skipped", skipReason: "needs_human" }` |
 
 - **Staying alive needs nothing extra.** Every Motir tool call keeps your run alive; a run Motir has not
   heard from for an hour is closed for you. (In Claude Code the `motir` plugin also heartbeats it after
@@ -323,6 +324,13 @@ report that you stopped and why. Never write the plan or the missing cards yours
 - **A child that cannot be committed stops only its own chain**: a `manual` child (the person does it),
   a design the user has not approved yet, or a wrong child (step 8, anchored at that child). Run every
   other ready child.
+- **A `manual` / `executor: human` child must be reported to Motir, not only named in your summary.**
+  The opening step still needs you to hold it, so claim it like every child, then
+  `report_action { key: <child>, events: [{ kind: "card_settled", disposition: "skipped", skipReason: "needs_human" }] }`
+  and run nothing on it. That event is the ONLY thing that raises the card's `manual_work` gate, which
+  puts it in **Waiting on you**, routes it to its assignee (an unassigned card goes to whoever started
+  the run) and lets Guide me through or Mark done clear it. Without it the card just sits In Progress and
+  nobody is asked. Close the run `gated` once every other ready child is done.
 - **At the LAST child in a repository**: read the parent's children again (`get_work_item`) — any child
   not yet Implemented, including one filed during this run, is run, moved out of the story, or reported
   and the draft left as it is. Then `publish_test_instructions` on the **PARENT**, rewrite the pull
