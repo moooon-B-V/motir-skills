@@ -178,9 +178,9 @@ Before picking anything up, look at the branches and worktrees earlier runs left
 
   | how the run ends | `outcome` |
   |---|---|
-  | the card is Implemented and its pull request linked (step 6), or a parent's pull request is ready (step 9) | `completed` |
+  | the card is Implemented and its pull request linked (step 6) — **a build-through too, whether or not its discrepancy was recorded** (step 8) — or a parent's pull request is ready (step 9) | `completed` |
   | a parent run ran out of ready children before its last one | `drained` |
-  | the card is wrong and its correction is submitted (step 8) | `replanned` |
+  | the card is wrong, the WHAT breaks, and its correction is submitted (step 8) | `replanned` |
   | the remaining children wait on an approval gate (a design, decision, choice or manual card not yet approved) | `gated` |
   | a stop you could not get past for any other reason — a refusal, a live worktree, a failed call | `halted` |
   | the person stopped you | `interrupted` |
@@ -220,6 +220,8 @@ git worktree add ../<repo>-<KEY> -b <KEY>-<short-slug> origin/<default-branch>
 
 ### 6. Hand it back — in this order
 
+0. **If you built through a wrong HOW (step 8), record it first:** `record_run_discrepancy`, once, before
+   the pull request opens — and state the same deviations in the pull request's description.
 1. **Push and open the pull request**, ready for review (not a draft), against the default branch, with
    the card's key in the title as a label — e.g. `ACME-12 Add the export button`. Pass every label in
    the `gh pr create` call itself; adding one afterwards re-triggers CI. Include a **How to test**
@@ -248,13 +250,51 @@ after the merge.
 4. If the fix changed a step in How to test, publish it again (`publish_test_instructions`, the whole
    corrected body) and update the pull request's section to match.
 
-### 8. The card is wrong — hand the correction to Motir's planner, and stop
+### 8. The card is wrong — build through a wrong HOW; hand a broken WHAT to Motir's planner, and stop
 
-A card is wrong when it cannot be built as written: mis-scoped, premised on something that does not
+A card seems wrong when it cannot be built as written: mis-scoped, premised on something that does not
 exist (check the code first — a hunch is not evidence), missing its design, straddling two
-repositories, or contradicting itself. **Do not build it, do not quietly narrow it, and do not create
-the missing cards yourself** — a run creates no work item except a bug. Hand the WHAT to Motir's
-planner, in this order, each step once:
+repositories, or contradicting itself. **Ask ONE question first:**
+
+> **Is the WHAT — the card's outcome and its acceptance criteria — unchanged, consistent with itself and
+> with shipped reality and other cards' scope, and reachable by this run alone?**
+
+#### Yes ⇒ BUILD THROUGH
+
+Build to the WHAT, open the pull request and walk the card to Implemented as on any run. Three shapes:
+a **false precondition** you can work around inside the card; **existing code** the plan never said to
+change, adapted only as far as the WHAT needs; a **planned HOW that cannot be built as written** while
+the outcome is reachable another way. A build-through changes the route, never the WHAT, and never
+touches another card — *no adjacent fix* and *no widening the card* still hold. It files **no planning
+bug**, reads no verdict, does **not** park the card at Planning, submits **no re-plan**, owes **no
+lesson**, and **never edits the card's body**.
+
+**Record it ONCE, after building and before the pull request opens:**
+`record_run_discrepancy { key, points: [{ planAsked, built, why }] }` with every point (1–20; each field
+1–2000 characters). The tool writes the card comment itself — do **not** also `add_comment` — and, when
+the card has an open run leg, one `discrepancy_recorded` finding; it answers `{ commentId, recorded }`.
+Gated `work_item:edit`, which a Motir token already holds. State the same deviations in the pull
+request's description. On a parent run, record each discrepancy on its own CHILD's key.
+
+- **Check the tool is there before you rely on it:** it is in your tool list, or the record is missing.
+- **`recorded: false` is not missing:** the comment was written; the card simply had no open run leg.
+- **A missing record never stops delivery.** On `RUN_DISCREPANCY_INVALID` fix the input and retry once. On
+  `DISCREPANCY_ALREADY_RECORDED` do not retry — the leg already has its record. On any other refusal, a
+  transport failure or an absent tool, open the pull request anyway and write *"discrepancy record
+  missing: `<code or reason>`"* in its description and in your final report, listing the points there.
+- A point that is **still broken after the card is done** is a defect: file it as a bug and cite its key
+  in that point's `why`. A defect that is not this card's and does not block it is filed as a bug and
+  you carry on, on a build-through too.
+- If building through later shows the WHAT is unreachable, it becomes a STOP; the discrepancy already
+  recorded stays.
+
+#### No ⇒ STOP: hand the correction to Motir's planner
+
+The WHAT must change, contradicts itself, shipped reality or another card's scope, or needs a person's
+decision or another card's unbuilt work. A manual or human executor, a UI card with no approved design,
+a card straddling two repositories and a missing credential are always STOP, never a build-through.
+**Do not build it, do not quietly narrow it, and do not create the missing cards yourself** — a run
+creates no work item except a bug. Hand the WHAT to Motir's planner, in this order, each step once:
 
 1. **`transition_status { key, status: "planning" }`** — the first write. **Never `blocked`:** no
    dependency edge exists until a person approves the correction, so a Blocked card still looks ready
@@ -321,9 +361,12 @@ report that you stopped and why. Never write the plan or the missing cards yours
   (`gh pr create --draft`), its title carrying the PARENT's key, and **`link_pull_request` it to the
   PARENT** in the same step. A draft cannot merge — which matters, because merging a parent's pull
   request moves the parent to Done and **closes every child under it**, built or not.
+- **A wrong child is judged alone, by step 8's test.** A child wrong only about its HOW is built through
+  as one commit like any child, with `record_run_discrepancy` keyed on THAT child, and the parent run
+  continues.
 - **A child that cannot be committed stops only its own chain**: a `manual` child (the person does it),
-  a design the user has not approved yet, or a wrong child (step 8, anchored at that child). Run every
-  other ready child.
+  a design the user has not approved yet, or a child whose WHAT breaks (step 8's STOP, anchored at that
+  child). Run every other ready child.
 - **A `manual` / `executor: human` child must be reported to Motir, not only named in your summary.**
   The opening step still needs you to hold it, so claim it like every child, then
   `report_action { key: <child>, events: [{ kind: "card_settled", disposition: "skipped", skipReason: "needs_human" }] }`
