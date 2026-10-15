@@ -17,7 +17,7 @@
   {
     "corpusPath": "prompts/run.md",
     "heading": "A RUNBOOK RUN PUTS ITSELF ON THE RUN RECORD — open after the claim, report before every step, close on every exit",
-    "sha256": "49c3bee64eb8ba0c0a6557cc8442330d0e45328f397c7b2293f53275f0519269"
+    "sha256": "f4791752dbdc05f73ab7d047e829a0025be978825f0b1f1fddbbc04df76305d8"
   },
   {
     "corpusPath": "prompts/run.md",
@@ -47,17 +47,17 @@
   {
     "corpusPath": "prompts/run.md",
     "heading": "⚠️ A RECORDED DEVIATION that names an OPEN defect is a `bug` to FILE — never a paragraph",
-    "sha256": "f2ac9e5a3e876e11addadb79154fd18b63d2100a1bc6546109e70209607efe17"
+    "sha256": "00b6a3905ae07aacaee1248451b3490ece1b5fa5fc5ba78172fe7ebf9ccd559c"
   },
   {
     "corpusPath": "prompts/run.md",
     "heading": "`motir run` (alias `motir next --run`)",
-    "sha256": "753208335f4a435c6f1ebbdd39b81a3578f3094185dae589f157b60eac55efe2"
+    "sha256": "a5be44c79c930d45b4320860a115f3fccc7b2d70678f6baa394fdfa429235769"
   },
   {
     "corpusPath": "prompts/run.md",
     "heading": "`motir run <parent>` — run a container ONE LAYER above leaves (one commit per child)",
-    "sha256": "9e6159c3fd4da5ed37210621bb2b52dcef7d9d0db06d404441ad8b1cf4a125a4"
+    "sha256": "15ddcbc7f26b968ed767395418716751db479b91234886edc27647ec6d6e9878"
   },
   {
     "corpusPath": "prompts/_shared.md",
