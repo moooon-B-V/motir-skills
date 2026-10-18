@@ -36,7 +36,9 @@ runs. The repository root holds the marketplace manifest and this tooling, which
 11. `check_bundle` — The plugin folder holds only what a user runs: its manifest, the icon it names, the
    skills (`SKILL.md` and `SYNC.json` each), the runner, `README.md` and `LICENSE`. Anything else — a
    test, a CI script — is scanned by the directory as part of the plugin, and has held it for review.
-   The one other file it may hold is `hooks/hooks.json`, which `check_hooks` reads.
+   The one other file it may hold is `hooks/hooks.json`, which `check_hooks` reads. The plugin ships no
+   hook today: a hook on every tool use cost two network calls per tool use and failed loudly where the
+   plugin's own server was hidden behind a duplicate registration (MOTIR-8952).
 12. `check_hooks` — The plugin's `hooks/hooks.json`, when present, is a JSON object whose `hooks` maps
    Claude Code events to matcher groups of `mcp_tool` hooks, and every one of them calls a tool on THIS
    plugin's own MCP server by its scoped name, `plugin:<plugin name>:<server key>` — the bare key names
