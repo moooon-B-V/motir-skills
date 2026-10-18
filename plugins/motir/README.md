@@ -14,10 +14,6 @@ Installing the plugin brings four things:
   Motir's consent screen you pick the workspace and approve. There is no token to create or paste.
 - **The `motir` CLI**, through the `scripts/motir` runner, which runs one pinned `@motir/cli` version
   with `npx`. It needs **Node.js 22 or newer** and signs in on its own (`motir login`).
-- **A heartbeat hook** that keeps a run on Motir's run record alive. `motir-run` records each run in
-  Motir — the agent, the model, its steps and how it ended — and Motir closes a run it has not heard
-  from for an hour. After every tool use the hook calls the `motir` server's `report_action` with no
-  arguments, so a long stretch of local work cannot lapse it. It sends nothing about what you are doing.
 
 You need a Motir account and a project, `git`, and the GitHub CLI (`gh`) where a skill reads pull
 requests. Setup for other agents: <https://motir.co/docs/mcp>. Source, documentation and issues:

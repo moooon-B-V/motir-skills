@@ -480,15 +480,20 @@ class HooksTest(TreeCase):
     """`check_hooks`: the plugin's heartbeat hook calls its OWN MCP server by the scoped name (MOTIR-7446)."""
 
     REL = PLUGIN + "/hooks/hooks.json"
+    HOOK = {"type": "mcp_tool", "server": "plugin:motir:motir", "tool": "report_action", "input": {}}
+
+    def setUp(self):
+        super().setUp()
+        self.tree.write(self.REL, json.dumps({"hooks": {
+            "PreToolUse": [{"matcher": "*", "hooks": [dict(self.HOOK)]}],
+            "PostToolUse": [{"matcher": "*", "hooks": [dict(self.HOOK)]}]}}))
 
     def hooks(self):
         return json.loads(read(self.tree.path(self.REL)))
 
-    def test_the_shipped_hook_targets_the_plugin_server(self):
-        for event in ("PreToolUse", "PostToolUse"):
-            hook = self.hooks()["hooks"][event][0]["hooks"][0]
-            self.assertEqual(hook, {"type": "mcp_tool", "server": "plugin:motir:motir",
-                                    "tool": "report_action", "input": {}})
+    def test_the_plugin_ships_no_hook(self):
+        # MOTIR-8952: a hook on every tool use ran outside any run and errored when the plugin's server was hidden.
+        self.assertFalse(os.path.exists(os.path.join(REPO, PLUGIN, "hooks")))
 
     def test_the_bare_server_key_fails(self):
         data = self.hooks()

@@ -172,8 +172,8 @@ Before picking anything up, look at the branches and worktrees earlier runs left
   | a parent's child is `manual` / executor `human` — a person must do it | `{ kind: "card_settled", disposition: "skipped", skipReason: "needs_human" }` |
 
 - **Staying alive needs nothing extra.** Every Motir tool call keeps your run alive; a run Motir has not
-  heard from for an hour is closed for you. (In Claude Code the `motir` plugin also heartbeats it after
-  every tool use.)
+  heard from for an hour is closed for you. During a long stretch of local work with no Motir call (a
+  build, a test run), call `report_action` with no arguments at least every 20 minutes.
 - **`close_work_item_run { key, runId, outcome }` on EVERY exit**, on the key you opened it on:
 
   | how the run ends | `outcome` |
