@@ -80,6 +80,7 @@ The tools:
 | `delete_work_item_todo { key, todoId }` | removes one step (step 7 only) |
 | `move_work_item_todo { key, todoId, toIndex }` | moves one step to a 0-based position, clamped to the list (step 7 only) |
 | `update_work_item { key, title?, descriptionMd?, explanationMd? }` | edits the guided card's own text (step 7 only) |
+| `get_approval_gate { key, kind: "manual_work" }` | whether a parent run is waiting on this card (steps 1 and 10) — read-only |
 
 **Ticking the last step does NOT move the card** — closing it is step 10 below, never a side effect.
 Ticking is idempotent, so a repeated tick keeps who ticked it first.
@@ -99,8 +100,18 @@ Refuse, in this order — **say why, and change nothing**:
    `motir-run` skill). The `type` decides nothing — a human card of any type is guided.
 2. Status `done` or `cancelled` ⇒ it is already finished. Re-opening it is a person's decision.
 3. Archived ⇒ say so, with the reason from its latest comment.
-4. `readiness.ready` is false ⇒ name the cards it waits on (`openBlockers`) and their status. A step
-   done before its prerequisite is the step most likely to be done twice.
+4. `readiness.ready` is false ⇒ first check whether a **parent run** is waiting on this card. A parent
+   run keeps its children at Implemented or In Review on the parent's branch until the parent's pull
+   request merges, and that merge waits on this card, so a human child of a parent run never reads
+   ready. When the run skipped the card it raised a `manual_work` gate on it, and that gate is the run
+   saying the prerequisites are in:
+   - the card has a `parent`, the parent's status is In Progress, and
+     `get_approval_gate { key, kind: "manual_work" }` answers `state: awaiting` ⇒ guide it. Say so —
+     the parent, who the gate is routed to (`routedToLabel`), and each open blocker with its status —
+     and go on to step 2.
+   - anything else (no parent, a parent not In Progress, `gate: null`, a gate already `approved` or
+     `superseded`) ⇒ name the cards it waits on (`openBlockers`) and their status, and stop. A step
+     done before its prerequisite is the step most likely to be done twice.
 
 ### 2. Claim it, or resume
 
@@ -228,7 +239,10 @@ When every step is ticked:
    saw), **on the person's word**, or **done by the agent** (and checked) — and each correction step 7
    made (before → after, and why). Never a secret's value. A
    human card usually has no pull request, so this comment is the record the close rests on.
-2. **No linked pull request** (the card's `deliveries` is empty) ⇒ walk it to Done:
+2. **An awaiting `manual_work` gate** (re-read it with `get_approval_gate`) ⇒ do not move the status:
+   the gate owns the move to Done and refuses it over the MCP (`APPROVAL_GATE_PENDING`). Tell the person
+   to press **Mark done** on the card, then `motir continue <parent>` so the parent run resumes past
+   this card. **No linked pull request** (the card's `deliveries` is empty) ⇒ walk it to Done:
    `transition_status { key, status: "done" }` from In Progress. If a step is refused, the error lists
    the statuses it may move to — take the one leading to Done and continue. Never `cancelled`: the work
    was done. **A linked pull request** (a human review, say) ⇒ do not move the status: its merge closes
@@ -252,3 +266,6 @@ yes, while the target stands), never ticked to get past it.
 - Improvising a replacement for a step that cannot be done as written.
 - Guiding a card whose `executor` is not `human`, re-opening a finished one, closing one with an
   unticked step, or hand-closing one whose pull request has not merged.
+- Guiding a card with open blockers that no awaiting `manual_work` gate under an In Progress parent
+  vouches for, or moving a card whose `manual_work` gate is awaiting — the person's Mark done decides
+  it.
